@@ -1,5 +1,7 @@
+﻿using Core.Application.Interfaces.Repositories;
 using Core.Infrastructure.Identity;
 using Core.Infrastructure.Persistence;
+using Core.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +25,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+// 3. Register Repositories & Unit of Work 
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // ==========================================
 
 var app = builder.Build();
