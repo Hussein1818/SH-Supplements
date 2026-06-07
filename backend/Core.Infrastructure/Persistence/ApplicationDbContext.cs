@@ -4,7 +4,6 @@ using Core.Domain.Entities.Financials;
 using Core.Domain.Entities.Sales;
 using Core.Domain.Entities.System;
 using Core.Domain.Entities.Users;
-using Core.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
