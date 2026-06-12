@@ -6,6 +6,7 @@ using Core.Domain.Entities.System;
 using Core.Domain.Entities.Users;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Core.Domain.Entities.Health;
 
 namespace Core.Infrastructure.Persistence;
 
@@ -45,6 +46,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<StockReservation> StockReservations { get; set; }
     public DbSet<ProductSubscription> ProductSubscriptions { get; set; }
+
+    // Health
+    public DbSet<HealthMetricRecord> HealthMetricRecords { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
