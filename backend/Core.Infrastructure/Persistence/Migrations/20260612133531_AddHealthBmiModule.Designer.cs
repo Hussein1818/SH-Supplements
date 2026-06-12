@@ -4,6 +4,7 @@ using Core.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Core.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260612133531_AddHealthBmiModule")]
+    partial class AddHealthBmiModule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -372,26 +375,17 @@ namespace Core.Infrastructure.Persistence.Migrations
                     b.ToTable("WalletTransactions");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Health.HealthMetricRecord", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Health.BmiRecord", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("ActivityLevel")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Age")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BmiCategory")
-                        .HasColumnType("int");
-
                     b.Property<double>("BmiValue")
                         .HasColumnType("float");
 
-                    b.Property<double>("BmrValue")
-                        .HasColumnType("float");
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -401,9 +395,6 @@ namespace Core.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Gender")
-                        .HasColumnType("int");
 
                     b.Property<double>("Height")
                         .HasColumnType("float");
@@ -417,9 +408,6 @@ namespace Core.Infrastructure.Persistence.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("TdeeValue")
-                        .HasColumnType("float");
-
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -431,7 +419,7 @@ namespace Core.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("HealthMetricRecords", (string)null);
+                    b.ToTable("BmiRecords", (string)null);
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.Sales.Cart", b =>
@@ -1442,7 +1430,7 @@ namespace Core.Infrastructure.Persistence.Migrations
                     b.Navigation("UserProfile");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Health.HealthMetricRecord", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Health.BmiRecord", b =>
                 {
                     b.HasOne("Core.Domain.Entities.Users.ApplicationUser", null)
                         .WithMany()
