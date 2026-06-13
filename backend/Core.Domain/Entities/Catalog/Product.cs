@@ -10,8 +10,8 @@ public class Product : BaseEntity
     public decimal Price { get; set; }
     public decimal? DiscountPrice { get; set; }
     public int StockQuantity { get; set; }
+    public byte[] RowVersion { get; set; } = null!;
 
-    
     public string Flavor { get; set; } = string.Empty;
     public int Servings { get; set; }
     public string Ingredients { get; set; } = string.Empty; 

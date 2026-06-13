@@ -13,6 +13,11 @@ using Microsoft.OpenApi.Models;
 using MediatR;
 using Core.Application.Features.Auth.Commands;
 using Core.Application.Features.Users.Commands;
+using Core.Application.Settings;
+using Hangfire;
+using Core.Application.Features.System.Commands;
+using API.Hubs;
+using API.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,6 +56,19 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// Hangfire Configuration
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))); // Make sure this matches your connection string name
+
+builder.Services.AddHangfireServer();
+
+// --- SignalR & Real-Time Notifications DI ---
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IStockNotificationService, StockNotificationService>();
+
 // ==========================================
 // Database & Identity Dependency Injection
 // ==========================================
@@ -76,6 +94,16 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 
 // Register Email Service
 builder.Services.AddScoped<IEmailService, EmailService>();
+
+
+// Financials & Payment Gateway DI 
+
+// 1. Bind Paymob settings from appsettings.json
+builder.Services.Configure<PaymobSettings>(builder.Configuration.GetSection("PaymobSettings"));
+
+// 2. Register Payment Service with an injected HttpClient
+builder.Services.AddHttpClient<IPaymentService, PaymobPaymentService>();
+
 // ==========================================
 // JWT Authentication Setup
 // ==========================================
@@ -125,7 +153,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseHangfireDashboard("/hangfire");
 
+app.MapHub<StockHub>("/hubs/stock");
+
+RecurringJob.AddOrUpdate<IMediator>(
+    "Process-Daily-Subscriptions",
+    mediator => mediator.Send(new ProcessDueSubscriptionsCommand(), CancellationToken.None),
+    Cron.Daily);
 
 app.UseAuthentication();
 app.UseAuthorization();
