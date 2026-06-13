@@ -79,4 +79,30 @@ public class CartsController : ControllerBase
         await _mediator.Send(command);
         return Ok(new { Message = "Item removed from cart successfully." });
     }
+
+    [HttpGet("cross-sell")]
+    public async Task<IActionResult> GetCrossSellSuggestions()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { Message = "User is not authorized." });
+
+        var query = new GetCartCrossSellQuery { UserId = userId };
+        var suggestions = await _mediator.Send(query);
+
+        return Ok(suggestions);
+    }
+    [HttpPost("add-bundle")]
+    public async Task<IActionResult> AddBundleToCart([FromBody] AddBundleToCartCommand command)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { Message = "User is not authorized." });
+
+        command.UserId = userId; 
+
+        var cartId = await _mediator.Send(command);
+
+        return Ok(new { Message = "Bundle added to cart successfully.", CartId = cartId });
+    }
 }

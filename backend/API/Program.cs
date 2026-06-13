@@ -1,23 +1,24 @@
-﻿using Core.Application.Interfaces.Repositories;
+﻿using API.Hubs;
+using API.Services;
+using Core.Application.Features.Auth.Commands;
+using Core.Application.Features.Catalog.Commands;
+using Core.Application.Features.System.Commands;
+using Core.Application.Features.Users.Commands;
+using Core.Application.Interfaces.Repositories;
 using Core.Application.Interfaces.Services;
+using Core.Application.Settings;
+using Core.Domain.Entities.Users;
 using Core.Infrastructure.Persistence;
 using Core.Infrastructure.Persistence.Repositories;
 using Core.Infrastructure.Services;
+using Hangfire;
+using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Core.Domain.Entities.Users;
 using Microsoft.OpenApi.Models;
-using MediatR;
-using Core.Application.Features.Auth.Commands;
-using Core.Application.Features.Users.Commands;
-using Core.Application.Settings;
-using Hangfire;
-using Core.Application.Features.System.Commands;
-using API.Hubs;
-using API.Services;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -129,6 +130,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.Configure<Core.Application.Settings.OrderSettings>(builder.Configuration.GetSection("OrderSettings"));
+
 var app = builder.Build();
 
 // Seed Data: Create Roles if they don't exist
@@ -161,6 +164,12 @@ RecurringJob.AddOrUpdate<IMediator>(
     "Process-Daily-Subscriptions",
     mediator => mediator.Send(new ProcessDueSubscriptionsCommand(), CancellationToken.None),
     Cron.Daily);
+
+// Check for restocked products every hour
+RecurringJob.AddOrUpdate<IMediator>(
+    "Process-Stock-Notifications",
+    mediator => mediator.Send(new ProcessStockNotificationsCommand(), CancellationToken.None),
+    Cron.Hourly);
 
 app.UseAuthentication();
 app.UseAuthorization();

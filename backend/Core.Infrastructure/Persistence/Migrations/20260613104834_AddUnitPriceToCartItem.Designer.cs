@@ -4,6 +4,7 @@ using Core.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Core.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260613104834_AddUnitPriceToCartItem")]
+    partial class AddUnitPriceToCartItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -359,49 +362,6 @@ namespace Core.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserProfileId");
 
                     b.ToTable("Reviews");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.Catalog.StockNotificationRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsNotified")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("StockNotificationRequests");
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.Financials.PaymentTransaction", b =>
@@ -1607,26 +1567,6 @@ namespace Core.Infrastructure.Persistence.Migrations
                     b.HasOne("Core.Domain.Entities.Users.UserProfile", "UserProfile")
                         .WithMany()
                         .HasForeignKey("UserProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("UserProfile");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.Catalog.StockNotificationRequest", b =>
-                {
-                    b.HasOne("Core.Domain.Entities.Catalog.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Core.Domain.Entities.Users.UserProfile", "UserProfile")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .HasPrincipalKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
