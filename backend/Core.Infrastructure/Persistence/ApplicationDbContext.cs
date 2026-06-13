@@ -27,6 +27,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Brand> Brands { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<ProductBundle> ProductBundles { get; set; }
+    public DbSet<BundleItem> BundleItems { get; set; }
+    public DbSet<StockNotificationRequest> StockNotificationRequests { get; set; }
 
     // Sales
     public DbSet<Order> Orders { get; set; }

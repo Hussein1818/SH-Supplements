@@ -88,7 +88,8 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
 
             updatedStocks.Add((product.Id, product.StockQuantity));
 
-            decimal unitPrice = product.DiscountPrice ?? product.Price;
+            decimal unitPrice = item.UnitPrice ?? (product.DiscountPrice ?? product.Price);
+
             subTotal += unitPrice * item.Quantity;
 
             orderItems.Add(new OrderItem

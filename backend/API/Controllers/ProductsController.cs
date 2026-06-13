@@ -1,11 +1,12 @@
 ﻿using Core.Application.Features.Catalog.Commands;
 using Core.Application.Features.Catalog.Queries;
+using Core.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
-using Core.Domain.Constants;
 
 namespace API.Controllers;
 
@@ -40,5 +41,20 @@ public class ProductsController : ControllerBase
     {
         var productId = await _mediator.Send(command);
         return Ok(new { Message = "Product created successfully.", ProductId = productId });
+    }
+
+    [HttpPost("{productId}/notify-restock")]
+    [Authorize]
+    public async Task<IActionResult> RequestRestockNotification(Guid productId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { Message = "User is not authorized." });
+
+        var command = new CreateStockNotificationCommand { UserId = userId, ProductId = productId };
+
+        await _mediator.Send(command);
+        return Ok(new { Message = "You will be notified when this product is back in stock." });
     }
 }
