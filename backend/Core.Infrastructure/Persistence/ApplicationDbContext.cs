@@ -46,6 +46,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<StockReservation> StockReservations { get; set; }
     public DbSet<ProductSubscription> ProductSubscriptions { get; set; }
+    public DbSet<SubscriptionItem> SubscriptionItems { get; set; }
 
     // Health
     public DbSet<HealthMetricRecord> HealthMetricRecords { get; set; }

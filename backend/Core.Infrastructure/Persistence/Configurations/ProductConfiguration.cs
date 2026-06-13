@@ -1,5 +1,4 @@
-﻿using Core.Domain.Entities;
-using Core.Domain.Entities.Catalog;
+﻿using Core.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,6 +14,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         // Decimals for money
         builder.Property(p => p.Price).HasColumnType("decimal(18,2)");
         builder.Property(p => p.DiscountPrice).HasColumnType("decimal(18,2)");
+
+        
+        builder.Property(p => p.RowVersion).IsRowVersion();
 
         // Relationships (Preventing Cascade Delete to protect data)
         builder.HasOne(p => p.Category)
