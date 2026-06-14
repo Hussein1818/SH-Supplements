@@ -55,4 +55,12 @@ public class OrdersController : ControllerBase
         await _mediator.Send(command);
         return Ok(new { Message = "Order status updated successfully." });
     }
+    [HttpPost("returns/{id}/process")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ProcessReturnRequest(Guid id, [FromBody] bool isApproved)
+    {
+        var command = new ProcessReturnRequestCommand { ReturnRequestId = id, IsApproved = isApproved };
+        var result = await _mediator.Send(command);
+        return Ok(new { Message = "Return request processed successfully.", Success = result });
+    }
 }

@@ -20,7 +20,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -62,7 +61,7 @@ builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))); // Make sure this matches your connection string name
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))); 
 
 builder.Services.AddHangfireServer();
 
@@ -131,7 +130,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.Configure<Core.Application.Settings.OrderSettings>(builder.Configuration.GetSection("OrderSettings"));
-
+builder.Services.Configure<Core.Application.Settings.LoyaltySettings>(builder.Configuration.GetSection("LoyaltySettings"));
 var app = builder.Build();
 
 // Seed Data: Create Roles if they don't exist

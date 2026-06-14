@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-
+using Core.Application.Settings;
 namespace API.Controllers;
 
 [Route("api/[controller]")]
@@ -82,8 +82,8 @@ public class ProductsController : ControllerBase
     [HttpGet("verify-serial/{serialNumber}")]
     public async Task<IActionResult> VerifySerialNumber(string serialNumber)
     {
-        var query = new VerifySerialNumberQuery { SerialNumber = serialNumber };
-        var result = await _mediator.Send(query);
+        var command = new VerifySerialNumberCommand { SerialNumber = serialNumber };
+        var result = await _mediator.Send(command);
 
         return Ok(result);
     }
@@ -94,6 +94,15 @@ public class ProductsController : ControllerBase
         var query = new GetIngredientDetailsQuery { IngredientName = name };
         var result = await _mediator.Send(query);
 
+        return Ok(result);
+    }
+    [HttpGet("personalized-for-me")]
+    [Authorize]
+    public async Task<IActionResult> GetPersonalizedProducts()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var query = new GetPersonalizedProductsQuery { UserId = userId! };
+        var result = await _mediator.Send(query);
         return Ok(result);
     }
 }

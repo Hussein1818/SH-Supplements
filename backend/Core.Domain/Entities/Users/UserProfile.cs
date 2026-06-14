@@ -20,8 +20,8 @@ public class UserProfile : BaseEntity
 
     
     public decimal WalletBalance { get; set; } = 0;
+    public int LoyaltyPoints { get; set; } = 0;
 
-    
     public ICollection<Address> Addresses { get; set; } = new List<Address>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

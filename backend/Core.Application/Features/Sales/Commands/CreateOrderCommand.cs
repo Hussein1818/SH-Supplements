@@ -1,12 +1,14 @@
 ﻿using Core.Application.Exceptions;
 using Core.Application.Interfaces.Repositories;
 using Core.Application.Interfaces.Services;
+using Core.Application.Settings;
 using Core.Domain.Entities.Catalog;
 using Core.Domain.Entities.Financials;
 using Core.Domain.Entities.Sales;
 using Core.Domain.Entities.Users;
 using Core.Domain.Enums;
 using MediatR;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +27,7 @@ public class CreateOrderCommand : IRequest<Guid>
     public PaymentMethod PaymentMethod { get; set; }
 
     public string? CouponCode { get; set; }
+    public int PointsToRedeem { get; set; } = 0;
 }
 
 public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Guid>
@@ -38,6 +41,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
     private readonly IGenericRepository<WalletTransaction> _walletTransactionRepository;
     private readonly IStockNotificationService _stockNotificationService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly LoyaltySettings _loyaltySettings;
 
     public CreateOrderCommandHandler(
         IGenericRepository<Cart> cartRepository,
@@ -48,7 +52,8 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
         IGenericRepository<UserProfile> userProfileRepository,
         IGenericRepository<WalletTransaction> walletTransactionRepository,
         IStockNotificationService stockNotificationService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IOptions<LoyaltySettings> loyaltySettings)
     {
         _cartRepository = cartRepository;
         _cartItemRepository = cartItemRepository;
@@ -59,6 +64,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
         _walletTransactionRepository = walletTransactionRepository;
         _stockNotificationService = stockNotificationService;
         _unitOfWork = unitOfWork;
+        _loyaltySettings = loyaltySettings.Value;
     }
 
     public async Task<Guid> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -69,10 +75,11 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
         var cartItems = (await _cartItemRepository.FindAsync(ci => ci.CartId == cart.Id)).ToList();
         if (!cartItems.Any()) throw new BadRequestException("Cart is empty.");
 
+        var userProfile = await _userProfileRepository.FirstOrDefaultAsync(u => u.UserId == request.UserId);
+        if (userProfile == null) throw new NotFoundException(nameof(UserProfile), request.UserId);
+
         decimal subTotal = 0;
         var orderItems = new List<OrderItem>();
-
-       
         var updatedStocks = new List<(Guid ProductId, int NewStock)>();
 
         foreach (var item in cartItems)
@@ -115,6 +122,26 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
             _couponRepository.Update(appliedCoupon);
         }
 
+        decimal amountAfterCoupon = subTotal - discountAmount;
+
+        // Loyalty Points Redemption Logic
+        if (request.PointsToRedeem > 0)
+        {
+            if (userProfile.LoyaltyPoints < request.PointsToRedeem)
+                throw new BadRequestException("Insufficient loyalty points.");
+
+            decimal pointsDiscount = request.PointsToRedeem * _loyaltySettings.RedemptionDiscountPerPoint;
+
+            if (pointsDiscount > amountAfterCoupon)
+            {
+                int maxPointsAllowed = (int)(amountAfterCoupon / _loyaltySettings.RedemptionDiscountPerPoint);
+                throw new BadRequestException($"You cannot redeem more points than the order total. Maximum points allowed for this order is {maxPointsAllowed}.");
+            }
+
+            discountAmount += pointsDiscount;
+            userProfile.LoyaltyPoints -= request.PointsToRedeem;
+        }
+
         var finalAmount = subTotal - discountAmount;
         if (finalAmount < 0) finalAmount = 0;
 
@@ -131,16 +158,13 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
             Items = orderItems
         };
 
+        // Wallet Payment Logic
         if (request.PaymentMethod == PaymentMethod.Wallet)
         {
-            var userProfile = await _userProfileRepository.FirstOrDefaultAsync(u => u.UserId == request.UserId);
-            if (userProfile == null) throw new NotFoundException(nameof(UserProfile), request.UserId);
-
             if (userProfile.WalletBalance < finalAmount)
                 throw new BadRequestException("Insufficient wallet balance to complete this purchase.");
 
             userProfile.WalletBalance -= finalAmount;
-            _userProfileRepository.Update(userProfile);
 
             var walletTransaction = new WalletTransaction
             {
@@ -168,6 +192,11 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
             _cartItemRepository.Delete(item);
         }
 
+        int earnedPoints = (int)(finalAmount * _loyaltySettings.PointsPerCurrencyUnit);
+        userProfile.LoyaltyPoints += earnedPoints;
+
+        _userProfileRepository.Update(userProfile);
+
         try
         {
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -177,7 +206,6 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
             throw new ConflictException("Sorry, one or more products in your cart were just sold out or updated by another user. Please review your cart and try again.");
         }
 
-        
         foreach (var stock in updatedStocks)
         {
             await _stockNotificationService.NotifyStockUpdateAsync(stock.ProductId, stock.NewStock);
