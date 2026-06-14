@@ -46,4 +46,22 @@ public class HealthController : ControllerBase
 
         return Ok(history);
     }
+
+    [HttpGet("progress-tracker")]
+    [Authorize]
+    public async Task<IActionResult> GetHealthProgress()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var query = new GetUserHealthProgressQuery { UserId = userId! };
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
+    [HttpPost("measurements")]
+    [Authorize]
+    public async Task<IActionResult> AddMeasurement([FromBody] AddHealthMeasurementCommand command)
+    {
+        command.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var recordId = await _mediator.Send(command);
+        return Ok(new { Message = "Measurement added successfully.", RecordId = recordId });
+    }
 }

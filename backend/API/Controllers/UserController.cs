@@ -71,4 +71,12 @@ public class UserController : ControllerBase
 
         return Ok(addresses);
     }
+    [HttpGet("loyalty-points")]
+    [Authorize]
+    public async Task<IActionResult> GetMyLoyaltyPoints()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var points = await _mediator.Send(new GetUserLoyaltyPointsQuery { UserId = userId });
+        return Ok(new { Points = points });
+    }
 }

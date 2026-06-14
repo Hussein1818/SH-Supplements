@@ -19,4 +19,6 @@ public class HealthMetricRecord : BaseEntity
 
     public double BmrValue { get; set; }
     public double TdeeValue { get; set; }
+    public double? BodyFatPercentage { get; set; }
+    public double? MuscleMassPercentage { get; set; }
 }

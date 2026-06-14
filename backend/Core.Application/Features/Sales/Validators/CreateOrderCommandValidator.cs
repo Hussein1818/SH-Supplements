@@ -13,5 +13,8 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 
         RuleFor(v => v.PaymentMethod)
             .IsInEnum().WithMessage("Invalid payment method.");
+
+        RuleFor(v => v.PointsToRedeem)
+            .GreaterThanOrEqualTo(0).WithMessage("Points to redeem cannot be negative.");
     }
 }
