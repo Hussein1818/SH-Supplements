@@ -57,4 +57,43 @@ public class ProductsController : ControllerBase
         await _mediator.Send(command);
         return Ok(new { Message = "You will be notified when this product is back in stock." });
     }
+    [HttpPost("ingredients")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AddIngredientGlossary([FromBody] AddIngredientGlossaryCommand command)
+    {
+        var ingredientId = await _mediator.Send(command);
+        return Ok(new { Message = "Ingredient added to glossary successfully.", IngredientId = ingredientId });
+    }
+
+    [HttpPost("{productId}/serial-numbers")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AddProductSerialNumbers(Guid productId, [FromBody] List<string> serialNumbers)
+    {
+        var command = new AddProductSerialNumbersCommand
+        {
+            ProductId = productId,
+            SerialNumbers = serialNumbers
+        };
+
+        var addedCount = await _mediator.Send(command);
+
+        return Ok(new { Message = $"Successfully registered {addedCount} authentic serial numbers." });
+    }
+    [HttpGet("verify-serial/{serialNumber}")]
+    public async Task<IActionResult> VerifySerialNumber(string serialNumber)
+    {
+        var query = new VerifySerialNumberQuery { SerialNumber = serialNumber };
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
+
+    [HttpGet("ingredients/{name}")]
+    public async Task<IActionResult> GetIngredientDetails(string name)
+    {
+        var query = new GetIngredientDetailsQuery { IngredientName = name };
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
 }
