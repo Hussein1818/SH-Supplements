@@ -131,6 +131,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.Configure<Core.Application.Settings.OrderSettings>(builder.Configuration.GetSection("OrderSettings"));
 builder.Services.Configure<Core.Application.Settings.LoyaltySettings>(builder.Configuration.GetSection("LoyaltySettings"));
+builder.Services.Configure<Core.Application.Settings.AffiliateSettings>(builder.Configuration.GetSection("AffiliateSettings"));
 var app = builder.Build();
 
 // Seed Data: Create Roles if they don't exist
