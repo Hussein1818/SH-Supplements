@@ -52,13 +52,13 @@ public class ProcessReturnRequestCommandHandler : IRequestHandler<ProcessReturnR
         var order = await _orderRepository.GetByIdAsync(returnReq.OrderId);
         if (order == null) throw new NotFoundException(nameof(Order), returnReq.OrderId);
 
-        if (request.IsApproved)
+        if (request.IsApproved && order.Status != OrderStatus.Refunded)
         {
 
-            var userProfile = await _userProfileRepository.FirstOrDefaultAsync(u => u.UserId == order.UserId);
-            if (userProfile != null)
+            var buyerProfile = await _userProfileRepository.FirstOrDefaultAsync(u => u.UserId == order.UserId);
+            if (buyerProfile != null)
             {
-                userProfile.WalletBalance += order.FinalAmount;
+                buyerProfile.WalletBalance += order.FinalAmount;
 
                 await _walletTxRepository.AddAsync(new WalletTransaction
                 {
@@ -69,10 +69,36 @@ public class ProcessReturnRequestCommandHandler : IRequestHandler<ProcessReturnR
                     ReferenceOrderId = order.Id
                 });
 
-                int pointsToDeduct = (int)(order.FinalAmount * _loyaltySettings.PointsPerCurrencyUnit);
-                userProfile.LoyaltyPoints = Math.Max(0, userProfile.LoyaltyPoints - pointsToDeduct);
 
-                _userProfileRepository.Update(userProfile);
+                int pointsToDeduct = (int)(order.FinalAmount * _loyaltySettings.PointsPerCurrencyUnit);
+                buyerProfile.LoyaltyPoints = Math.Max(0, buyerProfile.LoyaltyPoints - pointsToDeduct);
+
+                _userProfileRepository.Update(buyerProfile);
+            }
+
+            var commissionTx = await _walletTxRepository.FirstOrDefaultAsync(wt =>
+                wt.ReferenceOrderId == order.Id &&
+                wt.Type == TransactionType.Deposit &&
+                wt.UserId != order.UserId);
+
+            if (commissionTx != null)
+            {
+                var coachProfile = await _userProfileRepository.FirstOrDefaultAsync(u => u.UserId == commissionTx.UserId);
+                if (coachProfile != null)
+                {
+
+                    coachProfile.WalletBalance -= commissionTx.Amount;
+                    _userProfileRepository.Update(coachProfile);
+
+                    await _walletTxRepository.AddAsync(new WalletTransaction
+                    {
+                        UserId = coachProfile.UserId,
+                        Amount = commissionTx.Amount,
+                        Type = TransactionType.Withdrawal,
+                        Description = $"Commission reversal for refunded Order #{order.Id}",
+                        ReferenceOrderId = order.Id
+                    });
+                }
             }
 
             order.Status = OrderStatus.Refunded;

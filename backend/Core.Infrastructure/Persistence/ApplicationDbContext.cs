@@ -40,6 +40,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<ReturnRequest> ReturnRequests { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
+    public DbSet<AffiliateCode> AffiliateCodes { get; set; }
 
     // Financials
     public DbSet<PaymentTransaction> PaymentTransactions { get; set; }

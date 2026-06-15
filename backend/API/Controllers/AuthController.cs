@@ -1,5 +1,6 @@
 ﻿using Core.Application.Features.Auth.Commands;
 using Core.Application.Features.Auth.Queries;
+using Core.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -88,5 +89,24 @@ public class AuthController : ControllerBase
     {
         await _mediator.Send(command);
         return Ok(new { Message = "Password has been reset successfully." });
+    }
+    [HttpPost("{id}/assign-trainer")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> AssignTrainerRole(string id)
+    {
+        var command = new AssignTrainerRoleCommand { UserId = id };
+        await _mediator.Send(command);
+
+        return Ok(new { Message = "User has been successfully upgraded to Trainer." });
+    }
+
+    [HttpPost("{id}/revoke-trainer")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> RevokeTrainerRole(string id)
+    {
+        var command = new RevokeTrainerRoleCommand { UserId = id };
+        await _mediator.Send(command);
+
+        return Ok(new { Message = "Trainer role has been revoked and their affiliate code is deactivated." });
     }
 }
