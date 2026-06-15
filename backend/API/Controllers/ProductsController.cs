@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Core.Application.Settings;
 namespace API.Controllers;
 
+
 [Route("api/[controller]")]
 [ApiController]
 public class ProductsController : ControllerBase
@@ -104,5 +105,29 @@ public class ProductsController : ControllerBase
         var query = new GetPersonalizedProductsQuery { UserId = userId! };
         var result = await _mediator.Send(query);
         return Ok(result);
+    }
+    [HttpPost("{id}/alternatives")]
+    [Authorize(Roles = Roles.Admin)] 
+    public async Task<IActionResult> AddAlternative(Guid id, [FromBody] Guid alternativeProductId)
+    {
+        var command = new AddProductAlternativeCommand
+        {
+            ProductId = id,
+            AlternativeProductId = alternativeProductId
+        };
+
+        var resultId = await _mediator.Send(command);
+
+        return Ok(new { Message = "Alternative product linked successfully.", LinkId = resultId });
+    }
+
+    [HttpGet("{id}/alternatives")]
+    [AllowAnonymous] 
+    public async Task<IActionResult> GetAlternatives(Guid id)
+    {
+        var query = new GetProductAlternativesQuery { ProductId = id };
+        var alternatives = await _mediator.Send(query);
+
+        return Ok(alternatives);
     }
 }
