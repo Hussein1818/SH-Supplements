@@ -130,4 +130,22 @@ public class ProductsController : ControllerBase
 
         return Ok(alternatives);
     }
+    [HttpPost("analyze-stack")]
+    [AllowAnonymous] 
+    public async Task<IActionResult> AnalyzeStack([FromBody] AnalyzeStackConflictsQuery query)
+    {
+        var analysisResult = await _mediator.Send(query);
+
+        return Ok(analysisResult);
+    }
+    [HttpPost("{id}/active-ingredients")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> AddActiveIngredient(Guid id, [FromBody] AddProductActiveIngredientCommand command)
+    {
+        command.ProductId = id;
+
+        var resultId = await _mediator.Send(command);
+
+        return Ok(new { Message = "Active ingredient linked to product successfully.", LinkId = resultId });
+    }
 }
