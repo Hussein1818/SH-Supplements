@@ -148,4 +148,22 @@ public class ProductsController : ControllerBase
 
         return Ok(new { Message = "Active ingredient linked to product successfully.", LinkId = resultId });
     }
+    [HttpGet("flash-sales")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetFlashSales()
+    {
+        var query = new GetFlashSaleProductsQuery();
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
+    [HttpPost("trigger-clearance")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> TriggerClearanceManually()
+    {
+        var command = new ProcessDynamicClearanceCommand();
+        await _mediator.Send(command);
+
+        return Ok(new { Message = "Dynamic clearance process has been triggered manually." });
+    }
 }
