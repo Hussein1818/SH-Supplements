@@ -33,6 +33,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ProductSerialNumber> ProductSerialNumbers { get; set; }
     public DbSet<IngredientGlossary> IngredientGlossaries { get; set; }
     public DbSet<ProductAlternative> ProductAlternatives { get; set; }
+    public DbSet<ActiveIngredient> ActiveIngredients { get; set; }
+    public DbSet<ProductActiveIngredient> ProductActiveIngredients { get; set; }
 
     // Sales
     public DbSet<Order> Orders { get; set; }
