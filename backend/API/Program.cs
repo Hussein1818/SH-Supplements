@@ -68,6 +68,7 @@ builder.Services.AddHangfireServer();
 // --- SignalR & Real-Time Notifications DI ---
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IStockNotificationService, StockNotificationService>();
+builder.Services.AddScoped<IFlashSaleNotificationService, FlashSaleNotificationService>();
 
 // ==========================================
 // Database & Identity Dependency Injection
@@ -132,6 +133,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.Configure<Core.Application.Settings.OrderSettings>(builder.Configuration.GetSection("OrderSettings"));
 builder.Services.Configure<Core.Application.Settings.LoyaltySettings>(builder.Configuration.GetSection("LoyaltySettings"));
 builder.Services.Configure<Core.Application.Settings.AffiliateSettings>(builder.Configuration.GetSection("AffiliateSettings"));
+builder.Services.Configure<Core.Application.Settings.ClearanceSettings>(builder.Configuration.GetSection("ClearanceSettings"));
+
 var app = builder.Build();
 
 // Seed Data: Create Roles if they don't exist
@@ -170,6 +173,11 @@ RecurringJob.AddOrUpdate<IMediator>(
     "Process-Stock-Notifications",
     mediator => mediator.Send(new ProcessStockNotificationsCommand(), CancellationToken.None),
     Cron.Hourly);
+
+RecurringJob.AddOrUpdate<IMediator>(
+    "Process-Dynamic-Clearance",
+    mediator => mediator.Send(new ProcessDynamicClearanceCommand(), CancellationToken.None),
+    Cron.Daily);
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -18,7 +18,7 @@ public class Product : BaseEntity
     public string Warnings { get; set; } = string.Empty;
     public DateTime ExpiryDate { get; set; }
 
-    
+    public bool IsFlashSale { get; set; } = false;
     public Guid CategoryId { get; set; }
     public Category Category { get; set; } = null!;
 
