@@ -8,6 +8,7 @@ using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Core.Application.Features.Users.Commands;
 
 namespace Core.Application.Features.Financials.Commands;
 
@@ -25,17 +26,20 @@ public class ProcessPaymentWebhookCommandHandler : IRequestHandler<ProcessPaymen
     private readonly IGenericRepository<Order> _orderRepository;
     private readonly IPaymentService _paymentService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _mediator;
 
     public ProcessPaymentWebhookCommandHandler(
         IGenericRepository<PaymentTransaction> transactionRepository,
         IGenericRepository<Order> orderRepository,
         IPaymentService paymentService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMediator mediator)
     {
         _transactionRepository = transactionRepository;
         _orderRepository = orderRepository;
         _paymentService = paymentService;
         _unitOfWork = unitOfWork;
+        _mediator = mediator;
     }
 
     public async Task<bool> Handle(ProcessPaymentWebhookCommand request, CancellationToken cancellationToken)
@@ -68,6 +72,8 @@ public class ProcessPaymentWebhookCommandHandler : IRequestHandler<ProcessPaymen
             if (transaction.Status == PaymentStatus.Paid)
             {
                 order.Status = OrderStatus.Processing;
+                var generateScheduleCommand = new GenerateUserDosageScheduleCommand { OrderId = order.Id };
+                await _mediator.Send(generateScheduleCommand);
             }
 
             _orderRepository.Update(order);

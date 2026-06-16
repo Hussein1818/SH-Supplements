@@ -20,6 +20,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<UserProfile> UserProfiles { get; set; }
     public DbSet<Address> Addresses { get; set; }
     public DbSet<WishlistItem> WishlistItems { get; set; }
+    public DbSet<UserDosageSchedule> UserDosageSchedules { get; set; }
 
     // Catalog
     public DbSet<Product> Products { get; set; }
@@ -35,6 +36,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ProductAlternative> ProductAlternatives { get; set; }
     public DbSet<ActiveIngredient> ActiveIngredients { get; set; }
     public DbSet<ProductActiveIngredient> ProductActiveIngredients { get; set; }
+    public DbSet<ProductDosageGuide> ProductDosageGuides { get; set; }
 
     // Sales
     public DbSet<Order> Orders { get; set; }
