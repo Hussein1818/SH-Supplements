@@ -69,6 +69,7 @@ builder.Services.AddHangfireServer();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IStockNotificationService, StockNotificationService>();
 builder.Services.AddScoped<IFlashSaleNotificationService, FlashSaleNotificationService>();
+builder.Services.AddScoped<IDosageNotificationService, DosageNotificationService>();
 
 // ==========================================
 // Database & Identity Dependency Injection
@@ -135,6 +136,7 @@ builder.Services.Configure<Core.Application.Settings.LoyaltySettings>(builder.Co
 builder.Services.Configure<Core.Application.Settings.AffiliateSettings>(builder.Configuration.GetSection("AffiliateSettings"));
 builder.Services.Configure<Core.Application.Settings.ClearanceSettings>(builder.Configuration.GetSection("ClearanceSettings"));
 
+
 var app = builder.Build();
 
 // Seed Data: Create Roles if they don't exist
@@ -178,6 +180,11 @@ RecurringJob.AddOrUpdate<IMediator>(
     "Process-Dynamic-Clearance",
     mediator => mediator.Send(new ProcessDynamicClearanceCommand(), CancellationToken.None),
     Cron.Daily);
+
+RecurringJob.AddOrUpdate<IMediator>(
+    "Process-Dosage-Reminders",
+    mediator => mediator.Send(new ProcessDosageRemindersCommand(), CancellationToken.None),
+    "*/15 * * * *"); 
 
 app.UseAuthentication();
 app.UseAuthorization();

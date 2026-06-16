@@ -166,4 +166,23 @@ public class ProductsController : ControllerBase
 
         return Ok(new { Message = "Dynamic clearance process has been triggered manually." });
     }
+    [HttpPost("{id}/dosage-guide")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> AddDosageGuide(Guid id, [FromBody] AddProductDosageGuideCommand command)
+    {
+        command.ProductId = id;
+
+        var resultId = await _mediator.Send(command);
+
+        return Ok(new { Message = "Dosage guide added to product successfully.", GuideId = resultId });
+    }
+    [HttpGet("{id}/dosage-guides")]
+    [AllowAnonymous] 
+    public async Task<IActionResult> GetDosageGuides(Guid id)
+    {
+        var query = new GetProductDosageGuidesQuery { ProductId = id };
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
 }
