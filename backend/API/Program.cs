@@ -1,4 +1,5 @@
-﻿using API.Hubs;
+﻿using API.Extensions;
+using API.Hubs;
 using API.Services;
 using Core.Application.Features.Auth.Commands;
 using Core.Application.Features.Catalog.Commands;
@@ -22,14 +23,14 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ==========================================
+// 1. Core API Configuration
+// ==========================================
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "SH-Supplements API", Version = "v1" });
-
-    
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -37,77 +38,50 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter 'Bearer' [space] and then your token in the text input below.\n\nExample: \"Bearer 12345abcdef\""
+        Description = "Enter 'Bearer' [space] and then your token."
     });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+        { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, new string[] {} }
     });
 });
 
-// Hangfire Configuration
-builder.Services.AddHangfire(configuration => configuration
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))); 
+// ==========================================
+// 2. Database & Identity Configuration
+// ==========================================
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddHangfireServer();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
-// --- SignalR & Real-Time Notifications DI ---
+// ==========================================
+// 3. Settings Binding (Zero Hardcoding)
+// ==========================================
+builder.Services.Configure<PaymobSettings>(builder.Configuration.GetSection("PaymobSettings"));
+builder.Services.Configure<OrderSettings>(builder.Configuration.GetSection("OrderSettings"));
+builder.Services.Configure<LoyaltySettings>(builder.Configuration.GetSection("LoyaltySettings"));
+builder.Services.Configure<AffiliateSettings>(builder.Configuration.GetSection("AffiliateSettings"));
+builder.Services.Configure<ClearanceSettings>(builder.Configuration.GetSection("ClearanceSettings"));
+
+// ==========================================
+// 4. Dependency Injection (Services & Repos)
+// ==========================================
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(RegisterUserCommand).Assembly));
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient<IPaymentService, PaymobPaymentService>();
+
+// SignalR & Notifications
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IStockNotificationService, StockNotificationService>();
 builder.Services.AddScoped<IFlashSaleNotificationService, FlashSaleNotificationService>();
 builder.Services.AddScoped<IDosageNotificationService, DosageNotificationService>();
 
 // ==========================================
-// Database & Identity Dependency Injection
-// ==========================================
-
-// 1. Register ApplicationDbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// 2. Register Identity Services
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
-// 3. Register Repositories & Unit of Work 
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-// Register MediatR and tell it to look for handlers in the Application layer
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(RegisterUserCommand).Assembly));
-// ==========================================
-
-// 4. Register Token Service
-builder.Services.AddScoped<ITokenService, TokenService>();
-
-// Register Email Service
-builder.Services.AddScoped<IEmailService, EmailService>();
-
-
-// Financials & Payment Gateway DI 
-
-// 1. Bind Paymob settings from appsettings.json
-builder.Services.Configure<PaymobSettings>(builder.Configuration.GetSection("PaymobSettings"));
-
-// 2. Register Payment Service with an injected HttpClient
-builder.Services.AddHttpClient<IPaymentService, PaymobPaymentService>();
-
-// ==========================================
-// JWT Authentication Setup
+// 5. Authentication & JWT Setup
 // ==========================================
 builder.Services.AddAuthentication(options =>
 {
@@ -116,7 +90,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // Set to true in Production
+    options.RequireHttpsMetadata = false;
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -127,33 +101,31 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = builder.Configuration["Jwt:Audience"],
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero // To expire the token exactly at the specified time
+        ClockSkew = TimeSpan.Zero
     };
 });
 
-builder.Services.Configure<Core.Application.Settings.OrderSettings>(builder.Configuration.GetSection("OrderSettings"));
-builder.Services.Configure<Core.Application.Settings.LoyaltySettings>(builder.Configuration.GetSection("LoyaltySettings"));
-builder.Services.Configure<Core.Application.Settings.AffiliateSettings>(builder.Configuration.GetSection("AffiliateSettings"));
-builder.Services.Configure<Core.Application.Settings.ClearanceSettings>(builder.Configuration.GetSection("ClearanceSettings"));
+// ==========================================
+// 6. Hangfire Background Jobs
+// ==========================================
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
 
-
+// ==========================================
+// App Pipeline
+// ==========================================
 var app = builder.Build();
 
-// Seed Data: Create Roles if they don't exist
+// Execute Data Seeder on Startup
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    string[] roles = { "Customer", "Admin" };
-
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            await roleManager.CreateAsync(new IdentityRole(role));
-        }
-    }
+    await DataSeeder.SeedRolesAndAdminsAsync(scope.ServiceProvider, app.Configuration);
 }
-// Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -161,34 +133,18 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseHangfireDashboard("/hangfire");
-
-app.MapHub<StockHub>("/hubs/stock");
-
-RecurringJob.AddOrUpdate<IMediator>(
-    "Process-Daily-Subscriptions",
-    mediator => mediator.Send(new ProcessDueSubscriptionsCommand(), CancellationToken.None),
-    Cron.Daily);
-
-// Check for restocked products every hour
-RecurringJob.AddOrUpdate<IMediator>(
-    "Process-Stock-Notifications",
-    mediator => mediator.Send(new ProcessStockNotificationsCommand(), CancellationToken.None),
-    Cron.Hourly);
-
-RecurringJob.AddOrUpdate<IMediator>(
-    "Process-Dynamic-Clearance",
-    mediator => mediator.Send(new ProcessDynamicClearanceCommand(), CancellationToken.None),
-    Cron.Daily);
-
-RecurringJob.AddOrUpdate<IMediator>(
-    "Process-Dosage-Reminders",
-    mediator => mediator.Send(new ProcessDosageRemindersCommand(), CancellationToken.None),
-    "*/15 * * * *"); 
-
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Setup Endpoints & Hubs
+app.UseHangfireDashboard("/hangfire");
+app.MapHub<StockHub>("/hubs/stock");
 app.MapControllers();
+
+// Register Recurring Jobs
+RecurringJob.AddOrUpdate<IMediator>("Process-Daily-Subscriptions", m => m.Send(new ProcessDueSubscriptionsCommand(), CancellationToken.None), Cron.Daily);
+RecurringJob.AddOrUpdate<IMediator>("Process-Stock-Notifications", m => m.Send(new ProcessStockNotificationsCommand(), CancellationToken.None), Cron.Hourly);
+RecurringJob.AddOrUpdate<IMediator>("Process-Dynamic-Clearance", m => m.Send(new ProcessDynamicClearanceCommand(), CancellationToken.None), Cron.Daily);
+RecurringJob.AddOrUpdate<IMediator>("Process-Dosage-Reminders", m => m.Send(new ProcessDosageRemindersCommand(), CancellationToken.None), "*/15 * * * *");
 
 app.Run();
