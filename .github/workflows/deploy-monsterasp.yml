@@ -27,11 +27,6 @@ jobs:
     - name: Publish Project
       run: dotnet publish backend/API/API.csproj -c Release -o ./publish_output
 
-    - name: Generate Production AppSettings
-      run: |
-        cd ./publish_output
-        echo '{"ConnectionStrings": {"DefaultConnection": "${{ secrets.PROD_DB_CONNECTION }}"}}' > appsettings.Production.json
-
     - name: Deploy to MonsterASP via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
@@ -40,3 +35,7 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./publish_output/
         server-dir: /wwwroot/
+        exclude: |
+          appsettings.json
+          appsettings.*.json
+          logs/**
