@@ -123,6 +123,9 @@ var app = builder.Build();
 // Execute Data Seeder on Startup
 using (var scope = app.Services.CreateScope())
 {
+    var dbContext = scope.ServiceProvider.GetRequiredService<Core.Infrastructure.Persistence.ApplicationDbContext>();
+    dbContext.Database.Migrate();
+
     await DataSeeder.SeedRolesAndAdminsAsync(scope.ServiceProvider, app.Configuration);
 }
 
