@@ -1,0 +1,37 @@
+name: Deploy ASP.NET Core to MonsterASP
+
+on:
+  push:
+    branches:
+      - develop # Triggers the workflow only on pushes to the develop branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x' # Adjust this to match your .NET version (e.g., '8.0.x')
+
+    - name: Restore Dependencies
+      run: dotnet restore backend/API/API.csproj
+
+    - name: Build Project
+      run: dotnet build backend/API/API.csproj -c Release --no-restore
+
+    - name: Publish Project
+      run: dotnet publish backend/API/API.csproj -c Release -o ./publish_output
+
+    - name: Deploy to MonsterASP via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./publish_output/
+        server-dir: /wwwroot/
