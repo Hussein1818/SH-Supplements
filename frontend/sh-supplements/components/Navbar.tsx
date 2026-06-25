@@ -19,7 +19,6 @@ export default function Navbar() {
           className="font-bold text-xl text-[#0044CC] tracking-tight flex items-center gap-1"
         >
           SH-Supplements
-          
         </Link>
       </div>
 
@@ -41,20 +40,24 @@ export default function Navbar() {
           size="icon"
           className="relative text-gray-700 hover:bg-gray-100 h-9 w-9 rounded-md"
         >
-          <ShoppingCart className="h-5 w-5" />
-          <span className="absolute top-1 right-1 bg-[#0044CC] text-white rounded-full text-[10px] h-4 w-4 flex items-center justify-center font-bold">
-            0
-          </span>
+          <Link href="/cart">
+            <ShoppingCart className="h-5 w-5" />
+            <span className="absolute top-1 right-1 bg-[#0044CC] text-white rounded-full text-[10px] h-4 w-4 flex items-center justify-center font-bold">
+              0
+            </span>
+          </Link>
         </Button>
 
         <div className="h-9 w-9 rounded-full bg-gray-200 overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity shrink-0">
-          <Image
-            src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCAAxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwx MC8+PC9zdmc+"
-            alt="User Profile"
-            width={36}
-            height={36}
-            className="object-cover"
-          />
+          <Link href="/profile">
+            <Image
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCA1Ljc1IDIwIDUuNzVDMjAgNS43NSAyMCAAxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwxMC4yNUwyMCwx MC8+PC9zdmc+"
+              alt="User Profile"
+              width={36}
+              height={36}
+              className="object-cover"
+            />
+          </Link>
         </div>
       </div>
     </nav>
