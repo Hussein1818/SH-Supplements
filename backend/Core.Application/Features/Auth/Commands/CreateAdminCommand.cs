@@ -1,4 +1,5 @@
 ﻿using Core.Application.Exceptions;
+using Core.Domain.Constants;
 using Core.Domain.Entities.Users;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -38,8 +39,12 @@ public class CreateAdminCommandHandler : IRequestHandler<CreateAdminCommand, str
         var result = await _userManager.CreateAsync(admin, request.Password);
 
         if (!result.Succeeded)
-            throw new global::System.Exception(global::System.String.Join(", ", global::System.Linq.Enumerable.Select(result.Errors, e => e.Description)));
-        await _userManager.AddToRoleAsync(admin, "Admin");
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new BadRequestException($"Admin creation failed: {errors}");
+        }
+
+        await _userManager.AddToRoleAsync(admin, Roles.Admin);
 
         return admin.Id;
     }

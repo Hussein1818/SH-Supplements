@@ -1,6 +1,7 @@
 ﻿using Core.Application.Exceptions;
 using Core.Application.Interfaces.Repositories;
 using Core.Application.Interfaces.Services;
+using Core.Domain.Constants;
 using Core.Domain.Entities.Users;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -69,7 +70,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, s
         }
 
         // Assign default Customer role
-        await _userManager.AddToRoleAsync(user, "Customer");
+        await _userManager.AddToRoleAsync(user, Roles.Customer);
 
         // Create Business Profile and Link to Identity User
         var userProfile = new UserProfile
