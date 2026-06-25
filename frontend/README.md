@@ -1,1 +1,0 @@
-# SH-Supplements Frontend
