@@ -1,7 +1,7 @@
-//"use client";
+"use client";
 
 import Link from "next/link";
-import { Eye, Lock, User, X } from "lucide-react";
+import { Lock, User } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -12,8 +12,39 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import axios from "axios";
+
+const BASE_URL = "https://sh-supplements.runasp.net/api";
 
 export default function Login() {
+  const [formData, setFormData] = useState({
+    usernameOrEmail: "",
+    password: "",
+  });
+
+  async function handleLoginSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/Auth/login`,
+        {
+          usernameOrEmail: formData.usernameOrEmail,
+          password: formData.password,
+        },
+        {
+          withCredentials: true,
+        },
+      );
+
+      const data = response.data;
+      console.log(data);
+      localStorage.setItem("token", data.token);
+    } catch (error: any) {
+      console.log("login Failed:", error.response?.data || error.message);
+    }
+  }
+
   return (
     <div
       className="min-h-screen bg-[#F9F9F9] flex flex-col justify-between font-sans antialiased"
@@ -32,9 +63,7 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form
-              /* onSubmit={(e) => e.preventDefault()}  */ className="space-y-4"
-            >
+            <form className="space-y-4" onSubmit={handleLoginSubmit}>
               {/* username or email field */}
               <div className="space-y-2 text-left">
                 <Label
@@ -51,6 +80,13 @@ export default function Login() {
                     placeholder="username or email"
                     className="pl-10 pr-3 focus-visible:ring-[#0044CC] text-left"
                     required
+                    value={formData.usernameOrEmail}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        usernameOrEmail: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -68,26 +104,24 @@ export default function Login() {
 
                   <Input
                     id="password"
-                    /*                     type={showPassword ? "text" : "password"} // لو عامل State لإظهار الباسورد
-                     */
                     type="password"
                     placeholder="********"
                     className="pl-10 pr-10 focus-visible:ring-[#0044CC] text-left"
                     required
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        password: e.target.value,
+                      })
+                    }
                   />
 
                   <button
                     title="Toggle password visibility"
                     type="button"
-                    /*                     onClick={() => setShowPassword(!showPassword)}
-                     */ className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
-                  >
-                    {/* {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )} */}
-                  </button>
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
+                  ></button>
                 </div>
               </div>
 
