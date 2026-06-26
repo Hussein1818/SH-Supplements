@@ -5,7 +5,7 @@ using Core.Domain.Entities.Users;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using System;
-using System.Security.Claims;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,7 +13,6 @@ namespace Core.Application.Features.Auth.Commands;
 
 public class RefreshTokenCommand : IRequest<AuthResponseDto>
 {
-    public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
 }
 
@@ -30,13 +29,10 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
 
     public async Task<AuthResponseDto> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
+       
+        var user = _userManager.Users.FirstOrDefault(u => u.RefreshToken == request.RefreshToken);
 
-        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.Identity?.Name;
-
-        var user = await _userManager.FindByIdAsync(userId ?? string.Empty);
-
-        if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
             throw new BadRequestException("Invalid or expired refresh token.");
         }

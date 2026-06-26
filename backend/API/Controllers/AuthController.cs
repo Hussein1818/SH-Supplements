@@ -66,14 +66,13 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
+    public async Task<IActionResult> RefreshToken()
     {
         var refreshToken = Request.Cookies["refreshToken"];
         if (string.IsNullOrEmpty(refreshToken))
             return Unauthorized(new { Message = "Refresh token is missing from cookies." });
 
-        command.RefreshToken = refreshToken;
-
+        var command = new RefreshTokenCommand { RefreshToken = refreshToken };
         var authResponse = await _mediator.Send(command);
 
         SetRefreshTokenCookie(authResponse.RefreshToken);
