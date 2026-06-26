@@ -23,6 +23,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // ==========================================
 // 1. Core API Configuration
 // ==========================================
@@ -116,6 +117,21 @@ builder.Services.AddHangfire(configuration => configuration
 builder.Services.AddHangfireServer();
 
 // ==========================================
+// 7 CORS Configuration
+// ==========================================
+var allowedOrigins = builder.Configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+// ==========================================
 // App Pipeline
 // ==========================================
 var app = builder.Build();
@@ -136,6 +152,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 

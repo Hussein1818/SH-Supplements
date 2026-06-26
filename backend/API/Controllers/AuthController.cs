@@ -3,7 +3,9 @@ using Core.Application.Features.Auth.Queries;
 using Core.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -20,6 +22,18 @@ public class AuthController : ControllerBase
         _mediator = mediator;
     }
 
+    private void SetRefreshTokenCookie(string refreshToken)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = DateTime.UtcNow.AddDays(7),
+            Secure = true, 
+            SameSite = SameSiteMode.None 
+        };
+        Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+    }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterUserCommand command)
     {
@@ -31,7 +45,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginQuery query)
     {
         var authResponse = await _mediator.Send(query);
-        return Ok(authResponse);
+
+        SetRefreshTokenCookie(authResponse.RefreshToken);
+
+        return Ok(new { Token = authResponse.Token });
     }
 
     [HttpGet("confirm-email")]
@@ -51,8 +68,17 @@ public class AuthController : ControllerBase
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
     {
+        var refreshToken = Request.Cookies["refreshToken"];
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized(new { Message = "Refresh token is missing from cookies." });
+
+        command.RefreshToken = refreshToken;
+
         var authResponse = await _mediator.Send(command);
-        return Ok(authResponse);
+
+        SetRefreshTokenCookie(authResponse.RefreshToken);
+
+        return Ok(new { Token = authResponse.Token });
     }
 
     [Authorize]
@@ -61,6 +87,9 @@ public class AuthController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _mediator.Send(new RevokeTokenCommand { UserId = userId });
+
+        Response.Cookies.Delete("refreshToken");
+
         return Ok(new { Message = "Token revoked successfully." });
     }
 
@@ -90,6 +119,7 @@ public class AuthController : ControllerBase
         await _mediator.Send(command);
         return Ok(new { Message = "Password has been reset successfully." });
     }
+
     [HttpPost("{id}/assign-trainer")]
     [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> AssignTrainerRole(string id)
