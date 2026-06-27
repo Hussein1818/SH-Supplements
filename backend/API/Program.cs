@@ -136,6 +136,7 @@ builder.Services.AddCors(options =>
 // ==========================================
 var app = builder.Build();
 
+app.UseMiddleware<API.Middlewares.GlobalExceptionMiddleware>();
 // Execute Data Seeder on Startup
 using (var scope = app.Services.CreateScope())
 {
