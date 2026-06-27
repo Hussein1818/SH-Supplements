@@ -1,4 +1,5 @@
 ﻿using Core.Application.DTOs.Auth;
+using Core.Application.Exceptions;
 using Core.Application.Interfaces.Services;
 using Core.Domain.Entities.Users;
 using MediatR;
@@ -6,7 +7,6 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
 
 namespace Core.Application.Features.Auth.Queries;
 
@@ -41,10 +41,10 @@ public class LoginQueryHandler : IRequestHandler<LoginQuery, AuthResponseDto>
         }
 
         if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
-            throw new UnauthorizedAccessException("Invalid credentials.");
+            throw new BadRequestException("Invalid credentials.");
 
         if (!await _userManager.IsEmailConfirmedAsync(user))
-            throw new UnauthorizedAccessException("Please confirm your email before logging in.");
+            throw new BadRequestException("Please confirm your email before logging in.");
 
         var roles = await _userManager.GetRolesAsync(user);
 
