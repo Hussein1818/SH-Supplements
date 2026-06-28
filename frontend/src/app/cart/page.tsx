@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect } from "react";
 import Link from "next/link";
 import {
   Trash2,
@@ -11,11 +10,11 @@ import {
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/src/components/ui/button";
+import { Card, CardContent } from "@/src/components/ui/card";
+import { Separator } from "@/src/components/ui/separator";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/components/auth/authStore";
+import { useAuthStore } from "@/src/components/auth/authStore";
 
 // Mock Data أولية لمنتجات داخل السلة
 const INITIAL_CART = [

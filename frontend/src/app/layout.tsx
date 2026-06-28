@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
-import Sidebar from "@/components/Sidebar";
-import Navbar from "@/components/Navbar";
-import AppInitializer from "@/components/auth/AppInitializer";
+import { cn } from "@/src/lib/utils";
+import Sidebar from "@/src/components/Sidebar";
+import Navbar from "@/src/components/Navbar";
+import AppInitializer from "@/src/components/auth/AppInitializer";
 import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });

@@ -9,21 +9,21 @@ import {
   Dumbbell,
   Target,
   Save,
-  Lock,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/src/components/auth/authStore";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { useAuthStore } from "@/components/auth/authStore";
-import { useRouter } from "next/navigation";
+} from "@/src/components/ui/card";
+import { Badge } from "@/src/components/ui/badge";
+import { Label } from "@/src/components/ui/label";
+import { Input } from "@/src/components/ui/input";
+import { Button } from "@/src/components/ui/button";
 
 export default function ProfilePage() {
   const [name, setName] = useState("Mohamed Ibrahim");

@@ -8,12 +8,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Label } from "@/src/components/ui/label";
 import { useState } from "react";
-import { api } from "@/components/auth/axiosInstance";
+import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 

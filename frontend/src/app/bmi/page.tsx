@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import { Calculator, ArrowRight, Activity, Dumbbell, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card";
+import { Label } from "@/src/components/ui/label";
 
 export default function BMIPage() {
   const [weight, setWeight] = useState<string>("");
