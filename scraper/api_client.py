@@ -23,6 +23,7 @@ class ApiClient:
         if not self.token:
             raise Exception("Unauthorized. Please authenticate first.")
             
+        # Reverted to the glorious bulk-import endpoint since it is now deployed
         import_url = f"{self.base_url}/Products/bulk-import"
         headers = {
             "Authorization": f"Bearer {self.token}",
@@ -31,7 +32,13 @@ class ApiClient:
         
         payload = {"products": products_list}
         
-        response = requests.post(import_url, json=payload, headers=headers)
-        response.raise_for_status()
-        
-        return response.json()
+        try:
+            # Sending the array of products to the CQRS Bulk Import handler
+            response = requests.post(import_url, json=payload, headers=headers)
+            
+            if response.status_code in [200, 201]:
+                return response.json()
+            else:
+                return {"error": f"Status {response.status_code}", "details": response.text}
+        except Exception as e:
+            return {"error": "Network Failure", "details": str(e)}
