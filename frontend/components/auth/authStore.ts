@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import axios from "axios";
+import { api } from "./axiosInstance";
 
 const BASE_URL = "https://sh-supplements.runasp.net/api";
 
@@ -23,9 +23,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   checkRefresh: async () => {
     try {
-      const response = await axios.post(`${BASE_URL}/Auth/refresh-token`, {
-        withcredentials: true,
-      });
+      const response = await api.post(
+        `${BASE_URL}/Auth/refresh-token`,
+        {},
+        {
+          withCredentials: true,
+        },
+      );
       set({ accessToken: response.data.token, isLoading: false });
     } catch (error) {
       set({ accessToken: null, isLoading: false });

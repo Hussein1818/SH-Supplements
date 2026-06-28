@@ -1,7 +1,6 @@
-//"use client";
+"use client";
 
-import Link from "next/link";
-import { Eye, Lock, User, X } from "lucide-react";
+import { User } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -12,8 +11,34 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { api } from "@/components/auth/axiosInstance";
+import { useState } from "react";
+import { toast } from "sonner";
+
+const BASE_URL = "https://sh-supplements.runasp.net";
 
 export default function ForgotPassword() {
+  const [formData, setFormData] = useState({
+    email: "",
+  });
+
+  async function handleForgotPassword(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    try {
+      const response = await api.post(`${BASE_URL}/api/Auth/forgot-password`, {
+        email: formData.email,
+      });
+      const successMessage =
+        response.data?.Message || "Reset link has been sent to your email!";
+      toast.success(successMessage);
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.Message ||
+        error.message ||
+        "Something went wrong.";
+      toast.error(errorMessage);
+    }
+  }
   return (
     <div
       className="min-h-screen bg-[#F9F9F9] flex flex-col justify-between font-sans antialiased"
@@ -32,9 +57,7 @@ export default function ForgotPassword() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form
-              /* onSubmit={(e) => e.preventDefault()}  */ className="space-y-4"
-            >
+            <form onSubmit={handleForgotPassword} className="space-y-4">
               {/* username or email field */}
               <div className="space-y-2 text-left">
                 <Label
@@ -51,6 +74,10 @@ export default function ForgotPassword() {
                     placeholder="Email"
                     className="pl-10 pr-3 focus-visible:ring-[#0044CC] text-left"
                     required
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                   />
                 </div>
               </div>

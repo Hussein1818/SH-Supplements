@@ -13,6 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { api } from "@/components/auth/axiosInstance";
+import { toast } from "sonner";
+import { useAuthStore } from "@/components/auth/authStore";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 
 const BASE_URL = "https://sh-supplements.runasp.net/api";
@@ -22,6 +26,9 @@ export default function Login() {
     usernameOrEmail: "",
     password: "",
   });
+
+  const loginStore = useAuthStore((state) => state.login);
+  const router = useRouter();
 
   async function handleLoginSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,10 +45,18 @@ export default function Login() {
       );
 
       const data = response.data;
-      console.log(data);
-      localStorage.setItem("token", data.token);
+      const token = data.token || data.accessToken;
+      loginStore(token);
+
+      router.push("/");
+
+      toast.success("Login Succeed! Welcome back.");
     } catch (error: any) {
-      console.log("login Failed:", error.response?.data || error.message);
+      const errorMessage =
+        error.response?.data?.Message || error.message || "Login Failed";
+      console.log("login Failed:", errorMessage);
+
+      toast.error(errorMessage);
     }
   }
 

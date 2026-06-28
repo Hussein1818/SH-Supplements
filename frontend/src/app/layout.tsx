@@ -4,6 +4,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
+import AppInitializer from "@/components/auth/AppInitializer";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -30,13 +32,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased bg-[#F9F9F9]">
-        <Navbar />
-        <div className="flex min-h-[calc(screen-80px)] w-full">
-          <aside className="sticky top-[61px] h-[calc(100vh-61px)] hidden md:block z-40">
-            <Sidebar />
-          </aside>
-          <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-        </div>
+        <Toaster position="top-right" richColors closeButton />
+        <AppInitializer>
+          <Navbar />
+          <div className="flex min-h-[calc(screen-80px)] w-full">
+            <aside className="sticky top-[61px] h-[calc(100vh-61px)] hidden md:block z-40">
+              <Sidebar />
+            </aside>
+            <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+          </div>
+        </AppInitializer>
       </body>
     </html>
   );

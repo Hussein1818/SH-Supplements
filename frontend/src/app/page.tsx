@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-//import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,27 +81,6 @@ const CLEARANCE_PRODUCTS = [
 ];
 
 export default function Home() {
-  // تايملر للعد التنازلي الخاص بالـ Clearance
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 4,
-    minutes: 12,
-    seconds: 45,
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: 59, seconds: 59 };
-        if (prev.hours > 0)
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        clearInterval(timer);
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <div className="min-h-screen bg-[#F9F9F9] text-gray-900 font-sans antialiased pb-12">
       {/* 1. Hero Section */}
@@ -250,17 +227,11 @@ export default function Home() {
             {/* Countdown Box */}
             <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700">
               <span className="text-gray-400 font-normal">Ends in:</span>
-              <span className="bg-white px-2 py-1 border border-orange-200 rounded text-red-500 shadow-sm">
-                {String(timeLeft.hours).padStart(2, "0")}
-              </span>
+              <span className="bg-white px-2 py-1 border border-orange-200 rounded text-red-500 shadow-sm"></span>
               :
-              <span className="bg-white px-2 py-1 border border-orange-200 rounded text-red-500 shadow-sm">
-                {String(timeLeft.minutes).padStart(2, "0")}
-              </span>
+              <span className="bg-white px-2 py-1 border border-orange-200 rounded text-red-500 shadow-sm"></span>
               :
-              <span className="bg-white px-2 py-1 border border-orange-200 rounded text-red-500 shadow-sm">
-                {String(timeLeft.seconds).padStart(2, "0")}
-              </span>
+              <span className="bg-white px-2 py-1 border border-orange-200 rounded text-red-500 shadow-sm"></span>
             </div>
           </div>
 

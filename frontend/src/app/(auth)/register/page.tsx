@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import axios from "axios";
+import { api } from "@/components/auth/axiosInstance";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const BASE_URL = "https://sh-supplements.runasp.net";
 
@@ -26,11 +28,45 @@ export default function Register() {
     password: "",
   });
 
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const passwordRules = {
+    length: formData.password.length >= 6,
+    hasLowerCase: /[a-z]/.test(formData.password),
+    hasUpperCase: /[A-Z]/.test(formData.password),
+    hasSpecialChar: /[^A-Za-z0-9]/.test(formData.password),
+  };
+
+  const isPasswordValid = Object.values(passwordRules).every(Boolean);
+
   async function handleRegisterSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    console.log(formData);
-    const response = await axios.post(`${BASE_URL}/api/register`, formData);
-    console.log(response.data);
+    if (!isPasswordValid) return;
+
+    try {
+      const response = await api.post(
+        `${BASE_URL}/api/auth/register`,
+        formData,
+      );
+      const successMessage =
+        response.data?.Message ||
+        "Account created successfully!, User registered successfully. Please check your email to confirm your account.";
+      toast.success(successMessage);
+      router.push('/co')
+    } catch (error: any) {
+      const serverResponse = error.response?.data;
+      console.error("Registration Error:", serverResponse);
+      if (serverResponse?.Message) {
+        toast.error(serverResponse.Message);
+      } else if (typeof serverResponse === "string") {
+        toast.error(serverResponse);
+      } else if (Array.isArray(serverResponse)) {
+        serverResponse.forEach((err: string) => toast.error(err));
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    }
   }
 
   return (
@@ -38,7 +74,6 @@ export default function Register() {
       className="min-h-screen bg-[#F9F9F9] flex flex-col justify-between font-sans antialiased"
       dir="ltr"
     >
-      {/* Main Form */}
       <main className="flex-1 flex items-center justify-center py-12 px-4">
         <Card className="w-full max-w-md bg-white border border-gray-100 shadow-sm rounded-md">
           <CardHeader className="text-center space-y-2 pb-6">
@@ -55,7 +90,7 @@ export default function Register() {
               {/* first name field */}
               <div className="space-y-2 text-left">
                 <Label
-                  htmlFor="name"
+                  htmlFor="firstName"
                   className="text-sm font-medium text-gray-700"
                 >
                   first Name
@@ -63,7 +98,7 @@ export default function Register() {
                 <div className="relative" dir="ltr">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    id="name"
+                    id="firstName"
                     type="text"
                     placeholder="John"
                     className="pl-10 pr-3 focus-visible:ring-[#0044CC] text-left"
@@ -74,10 +109,11 @@ export default function Register() {
                   />
                 </div>
               </div>
+
               {/* last name field */}
               <div className="space-y-2 text-left">
                 <Label
-                  htmlFor="name"
+                  htmlFor="lastName"
                   className="text-sm font-medium text-gray-700"
                 >
                   last Name
@@ -85,7 +121,7 @@ export default function Register() {
                 <div className="relative" dir="ltr">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    id="name"
+                    id="lastName"
                     type="text"
                     placeholder="Doe"
                     className="pl-10 pr-3 focus-visible:ring-[#0044CC] text-left"
@@ -96,10 +132,11 @@ export default function Register() {
                   />
                 </div>
               </div>
+
               {/* user name field */}
               <div className="space-y-2 text-left">
                 <Label
-                  htmlFor="name"
+                  htmlFor="userName"
                   className="text-sm font-medium text-gray-700"
                 >
                   user name
@@ -107,9 +144,9 @@ export default function Register() {
                 <div className="relative" dir="ltr">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    id="name"
+                    id="userName"
                     type="text"
-                    placeholder="Doe"
+                    placeholder="john_doe"
                     className="pl-10 pr-3 focus-visible:ring-[#0044CC] text-left"
                     required
                     onChange={(e) =>
@@ -123,7 +160,7 @@ export default function Register() {
               <div className="space-y-2 text-left">
                 <Label
                   htmlFor="email"
-                  className="text-sm text-left font-medium text-gray-700"
+                  className="text-sm font-medium text-gray-700"
                 >
                   Email Address
                 </Label>
@@ -137,69 +174,105 @@ export default function Register() {
                     required
                     value={formData.email}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        email: e.target.value,
-                      })
+                      setFormData({ ...formData, email: e.target.value })
                     }
                   />
                 </div>
               </div>
 
               {/* password field */}
-              <div className="space-y-2">
+              <div className="space-y-2 text-left">
                 <Label
                   htmlFor="password"
                   className="text-sm font-medium text-gray-700"
                 >
                   Password
                 </Label>
-                <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <div className="relative w-full">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
                     id="password"
                     placeholder="********"
-                    className="pr-10 pl-10 focus-visible:ring-[#0044CC]"
+                    className="pl-10 pr-10 focus-visible:ring-[#0044CC]"
                     required
                     value={formData.password}
+                    type={showPassword ? "text" : "password"}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        password: e.target.value,
-                      })
+                      setFormData({ ...formData, password: e.target.value })
                     }
                   />
                   <button
-                    title="Toggle password visibility"
                     type="button"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
-                  ></button>
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
-              {/* <div className="bg-[#F4F4F5] p-3 rounded-md space-y-2 text-xs text-gray-600">
-                <div className="flex items-center gap-2">
-                  <span>8 characters at least</span>
+              {/* 2. اللوحة التفاعلية لعرض الشروط لليوزر بالـ Clean UI */}
+              {formData.password && (
+                <div className="bg-gray-50 p-3 rounded-md space-y-1.5 text-xs text-gray-600 border border-gray-100">
+                  <div
+                    className={`flex items-center gap-1.5 ${passwordRules.length ? "text-green-600" : "text-red-500"}`}
+                  >
+                    {passwordRules.length ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <X className="h-3.5 w-3.5" />
+                    )}
+                    <span>At least 6 characters</span>
+                  </div>
+                  <div
+                    className={`flex items-center gap-1.5 ${passwordRules.hasLowerCase ? "text-green-600" : "text-red-500"}`}
+                  >
+                    {passwordRules.hasLowerCase ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <X className="h-3.5 w-3.5" />
+                    )}
+                    <span>At least one lowercase letter (a-z)</span>
+                  </div>
+                  <div
+                    className={`flex items-center gap-1.5 ${passwordRules.hasUpperCase ? "text-green-600" : "text-red-500"}`}
+                  >
+                    {passwordRules.hasUpperCase ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <X className="h-3.5 w-3.5" />
+                    )}
+                    <span>At least one uppercase letter (A-Z)</span>
+                  </div>
+                  <div
+                    className={`flex items-center gap-1.5 ${passwordRules.hasSpecialChar ? "text-green-600" : "text-red-500"}`}
+                  >
+                    {passwordRules.hasSpecialChar ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <X className="h-3.5 w-3.5" />
+                    )}
+                    <span>At least one special character (@, #, $, etc.)</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span>Contains numbers</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>One uppercase letter at least</span>
-                </div>
-              </div> */}
+              )}
 
-              {/* Create Account button */}
+              {/* 3. الزرار بيقفل (Disabled) لو الشروط متمتش */}
               <Button
                 type="submit"
-                className="w-full bg-[#0044CC] hover:bg-[#0033AA] text-white py-2 rounded-md transition-colors font-medium mt-2"
+                disabled={!isPasswordValid}
+                className="w-full bg-[#0044CC] hover:bg-[#0033AA] text-white py-2 rounded-md transition-colors font-medium mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create Account ←
               </Button>
             </form>
 
             <div className="text-center text-sm text-gray-500 pt-4 border-t border-gray-100">
-              Already have an account?
+              Already have an account?{" "}
               <Link
                 href="/login"
                 className="text-[#0044CC] font-semibold hover:underline"

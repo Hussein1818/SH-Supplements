@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   User,
@@ -22,15 +22,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { useAuthStore } from "@/components/auth/authStore";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
-  // Mock Data أولية لبيانات الحساب والمقاييس البدنية المربوطة
   const [name, setName] = useState("Mohamed Ibrahim");
   const [email, setEmail] = useState("mohamed.ibrahim@example.com");
   const [age, setAge] = useState("22");
   const [height, setHeight] = useState("178");
   const [weight, setWeight] = useState("75");
   const [goal, setGoal] = useState("Lean Mass Gain (Bulking)");
+
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    if (!accessToken) {
+      router.replace("/login");
+    }
+  }, [accessToken, router]);
+
+  if (!accessToken || !isClient) return null;
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
