@@ -21,12 +21,16 @@ class MuscleAndStrengthParser:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
-            page.set_extra_http_headers({'Accept-Language': 'en-US,en;q=0.9'})
+            
+            page.set_extra_http_headers({
+                'Accept-Language': 'en-US,en;q=0.9'
+            })
 
             for url in self.target_urls:
                 category_slug = url.split('/')[-1].replace('.html', '').replace('-', ' ').title()
                 print(f"      -> Scraping Muscle & Strength via Headless Browser: {category_slug}...")
                 try:
+                    # Wait for DOM to load fully to extract HTML properly if JSON-LD is missing
                     page.goto(url, wait_until="domcontentloaded", timeout=45000)
                     
                     soup = BeautifulSoup(page.content(), 'html.parser')
@@ -54,7 +58,7 @@ class MuscleAndStrengthParser:
                                         products_dto_list.append({
                                             "name": name[:200],
                                             "description": f"Imported {name}",
-                                            "price": price * 50,
+                                            "price": price * 50, 
                                             "discountPrice": None,
                                             "stockQuantity": 200,
                                             "flavor": "Unflavored",
@@ -75,15 +79,23 @@ class MuscleAndStrengthParser:
                         except json.JSONDecodeError:
                             continue
                             
+                    # Robust DOM Fallback for websites hiding JSON-LD
                     if not data_found:
                         product_cards = soup.find_all(['div', 'li'], class_=lambda x: x and 'product' in str(x).lower())
                         for card in product_cards:
                             name_elem = card.find(['h2', 'h3', 'a', 'div'], class_=lambda x: x and ('title' in str(x).lower() or 'name' in str(x).lower()))
                             price_elem = card.find(['span', 'div'], class_=lambda x: x and 'price' in str(x).lower())
                             
+                            # Extract Image URL safely
+                            img_elem = card.find('img')
+                            img_url = ""
+                            if img_elem:
+                                img_url = img_elem.get('data-src') or img_elem.get('src') or ""
+                            
                             if name_elem and price_elem:
                                 price_text = price_elem.text.strip()
-                                # Senior Trick: Use Regex to extract the first valid decimal number
+                                
+                                # Use Regex to extract the correct decimal number directly
                                 match = re.search(r'\d+\.\d+', price_text)
                                 if match:
                                     clean_price = float(match.group())
@@ -110,11 +122,12 @@ class MuscleAndStrengthParser:
                                         "brandCountryOfOrigin": "USA",
                                         "activeIngredients": [],
                                         "dosageGuides": [],
-                                        "images": []
+                                        "images": [{"imageUrl": img_url, "isMainImage": True}] if img_url else []
                                     })
                 except Exception as e:
                     print(f"[MuscleAndStrengthParser] Error on {url}: {e}")
                     continue
                     
             browser.close()
+            
         return products_dto_list
