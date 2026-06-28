@@ -2,16 +2,16 @@
 
 import React, { useState } from "react";
 import { TrendingUp, Scale, Flame, Award, Plus, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/src/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/src/components/ui/card";
+import { Input } from "@/src/components/ui/input";
+import { Label } from "@/src/components/ui/label";
 
 // Mock Data للسجلات السابقة
 const INITIAL_LOGS = [

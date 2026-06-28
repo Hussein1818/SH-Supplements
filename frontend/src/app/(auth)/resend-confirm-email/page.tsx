@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import axios from "axios";
 import { Mail, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -11,11 +10,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { api } from "@/components/auth/axiosInstance";
+} from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Label } from "@/src/components/ui/label";
+import { api } from "@/src/components/auth/axiosInstance";
 
 const BASE_URL = "https://sh-supplements.runasp.net";
 

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { ArrowUpRight, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/src/components/ui/button";
+import { Card, CardContent } from "@/src/components/ui/card";
+import { Badge } from "@/src/components/ui/badge";
 
 // --- Mock Data ---
 const CATEGORIES = [

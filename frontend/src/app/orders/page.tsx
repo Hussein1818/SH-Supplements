@@ -2,9 +2,9 @@
 
 import React from "react";
 import { ShoppingBag, Clock, CheckCircle2, Truck, ArrowRight, Package } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/src/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card";
+import { Badge } from "@/src/components/ui/badge";
 
 // Mock Data للطلبات السابقة والحالية
 const MOCK_ORDERS = [

@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Button } from "@/src/components/ui/button";
 
 export default function ConfirmEmailPage() {
   const searchParams = useSearchParams();

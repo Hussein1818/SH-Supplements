@@ -1,18 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import { Eye, EyeOff, Lock, User, X } from "lucide-react";
+import { Eye, EyeOff, Lock} from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
 import { useState } from "react";
-import { api } from "@/components/auth/axiosInstance";
+import { api } from "@/src/components/auth/axiosInstance";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 const BASE_URL = "https://sh-supplements.runasp.net";
