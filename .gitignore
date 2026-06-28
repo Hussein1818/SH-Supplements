@@ -487,3 +487,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Python Scraper
+scraper/venv/
+scraper/.env
+scraper/__pycache__/
+*.pyc
