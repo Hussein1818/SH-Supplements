@@ -1,4 +1,5 @@
 import json
+import re
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
@@ -26,7 +27,6 @@ class MuscleAndStrengthParser:
                 category_slug = url.split('/')[-1].replace('.html', '').replace('-', ' ').title()
                 print(f"      -> Scraping Muscle & Strength via Headless Browser: {category_slug}...")
                 try:
-                    # Waiting for DOM ensures we don't timeout from slow tracking scripts
                     page.goto(url, wait_until="domcontentloaded", timeout=45000)
                     
                     soup = BeautifulSoup(page.content(), 'html.parser')
@@ -54,7 +54,7 @@ class MuscleAndStrengthParser:
                                         products_dto_list.append({
                                             "name": name[:200],
                                             "description": f"Imported {name}",
-                                            "price": price * 50, # Rough conversion to EGP
+                                            "price": price * 50,
                                             "discountPrice": None,
                                             "stockQuantity": 200,
                                             "flavor": "Unflavored",
@@ -75,7 +75,6 @@ class MuscleAndStrengthParser:
                         except json.JSONDecodeError:
                             continue
                             
-                    # Robust Fallback
                     if not data_found:
                         product_cards = soup.find_all(['div', 'li'], class_=lambda x: x and 'product' in str(x).lower())
                         for card in product_cards:
@@ -84,7 +83,13 @@ class MuscleAndStrengthParser:
                             
                             if name_elem and price_elem:
                                 price_text = price_elem.text.strip()
-                                clean_price = float(''.join(c for c in price_text if c.isdigit() or c == '.') or 0)
+                                # Senior Trick: Use Regex to extract the first valid decimal number
+                                match = re.search(r'\d+\.\d+', price_text)
+                                if match:
+                                    clean_price = float(match.group())
+                                else:
+                                    clean_price = float(''.join(c for c in price_text if c.isdigit()) or 0)
+                                    
                                 if clean_price > 0:
                                     products_dto_list.append({
                                         "name": name_elem.text.strip()[:200],

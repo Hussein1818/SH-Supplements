@@ -32,23 +32,20 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<Pr
         _productRepository = productRepository;
     }
 
-    public  Task<List<ProductListDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
+    public Task<List<ProductListDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
     {
         var query = _productRepository.GetQueryable();
 
-        // 1. Apply Search
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             query = query.Where(p => p.Name.Contains(request.SearchTerm));
         }
 
-        // 2. Apply Category Filter
         if (request.CategoryId.HasValue && request.CategoryId != Guid.Empty)
         {
             query = query.Where(p => p.CategoryId == request.CategoryId.Value);
         }
 
-        // 3. Apply Goal Filter
         if (request.Goal.HasValue)
         {
             query = query.Where(p => p.Goal == request.Goal.Value);
@@ -69,26 +66,25 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<Pr
             query = query.Where(p => p.Price <= request.MaxPrice.Value);
         }
 
-        // 4. Apply Pagination & Mapping
         var pagedProducts = query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-           .Select(p => new ProductListDto
-           {
-               Id = p.Id,
-               Name = p.Name,
-               Price = p.Price,
-               DiscountPrice = p.DiscountPrice,
-               Goal = p.Goal,
-               
-               CategoryName = p.Category != null ? p.Category.Name : string.Empty,
-               BrandName = p.Brand != null ? p.Brand.Name : string.Empty,
-               AverageRating = p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0,
-               
-               MainImageUrl = p.Images.Where(i => i.IsMainImage).Select(i => i.ImageUrl).FirstOrDefault() ?? string.Empty
-           })
+            .Select(p => new ProductListDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                DiscountPrice = p.DiscountPrice,
+                Goal = p.Goal,
+
+                CategoryName = p.Category != null ? p.Category.Name : string.Empty,
+                BrandName = p.Brand != null ? p.Brand.Name : string.Empty,
+                AverageRating = p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0,
+
+                MainImageUrl = p.Images.Where(i => i.IsMainImage).Select(i => i.ImageUrl).FirstOrDefault() ?? string.Empty
+            })
             .ToList();
 
-        return Task.FromResult(pagedProducts); 
+        return Task.FromResult(pagedProducts);
     }
 }
