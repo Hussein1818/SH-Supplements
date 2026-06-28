@@ -24,6 +24,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         
         return _context.Set<T>().AsNoTracking();
     }
+    public async Task AddRangeAsync(IEnumerable<T> entities) => await _dbSet.AddRangeAsync(entities);
     public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
         => await _dbSet.Where(predicate).ToListAsync();
 

@@ -185,4 +185,15 @@ public class ProductsController : ControllerBase
 
         return Ok(result);
     }
+    [HttpPost("bulk-import")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> BulkImportProducts([FromBody] BulkImportProductsCommand command)
+    {
+        if (command.Products == null || !command.Products.Any())
+            return BadRequest(new { Message = "No products provided for import." });
+
+        var importedCount = await _mediator.Send(command);
+
+        return Ok(new { Message = $"Successfully imported {importedCount} products with all their dependencies." });
+    }
 }

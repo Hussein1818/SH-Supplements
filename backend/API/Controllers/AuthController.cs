@@ -28,8 +28,8 @@ public class AuthController : ControllerBase
         {
             HttpOnly = true,
             Expires = DateTime.UtcNow.AddDays(7),
-            Secure = true, 
-            SameSite = SameSiteMode.None 
+            Secure = true,
+            SameSite = SameSiteMode.None
         };
         Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
     }
