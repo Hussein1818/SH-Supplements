@@ -27,17 +27,17 @@ public class GetUserProfileQueryHandler : IRequestHandler<GetUserProfileQuery, U
 
     public async Task<UserProfileDto> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
     {
-        var profiles = await _profileRepo.GetAllAsync();
-        var profile = profiles.FirstOrDefault(p => p.UserId == request.UserId);
+        
+        var profile = await _profileRepo.FirstOrDefaultAsync(p => p.UserId == request.UserId);
 
         if (profile == null)
             throw new NotFoundException(nameof(UserProfile), request.UserId);
 
-        var allAddresses = await _addressRepo.GetAllAsync();
-        var userAddresses = allAddresses.Where(a => a.UserId == request.UserId).ToList();
+        var userAddresses = await _addressRepo.FindAsync(a => a.UserId == request.UserId);
 
         return new UserProfileDto
         {
+            Id = profile.UserId,
             FirstName = profile.FirstName,
             LastName = profile.LastName,
             PhoneNumber = profile.PhoneNumber,
