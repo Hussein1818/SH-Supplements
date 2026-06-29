@@ -10,6 +10,9 @@ import {
   Eye,
   EyeOff,
   LogOut,
+  Save,
+  Dumbbell,
+  User,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import {
@@ -25,16 +28,30 @@ import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/components/store/authStore";
 import { useRouter } from "next/navigation";
+
 const BASE_URL = "https://sh-supplements.runasp.net";
+
+type User = {
+  firstName: string;
+  lastName: string;
+  phoneNumber: number;
+  age: number;
+  weight: number;
+  height: number;
+  goal: number;
+  medicalConditions: string | null;
+};
 
 export default function SettingsPage() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [password, setPassword] = useState({
     currentPassword: "",
     newPassword: "",
   });
+
+  const [userData, setUserData] = useState<User | null>(null);
 
   const accessToken = useAuthStore((state) => state.accessToken);
   const router = useRouter();
@@ -53,8 +70,8 @@ export default function SettingsPage() {
     e.preventDefault();
     try {
       const response = await api.post(`${BASE_URL}/api/Auth/change-password`, {
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword,
+        currentPassword: password.currentPassword,
+        newPassword: password.newPassword,
       });
       toast.success(response.data?.Message || "Password changed successfully!");
     } catch (error: any) {
@@ -62,6 +79,20 @@ export default function SettingsPage() {
         error.response?.data?.Message || "Failed to change password.",
       );
     }
+  }
+
+  async function handleProfileUpdate() {
+    const response = await api.post("/User/profile", {
+/*       userId: userData?.,
+ */      firstName: userData?.firstName,
+      lastName: userData?.lastName,
+      phoneNumber: userData?.phoneNumber,
+      age: userData?.age,
+      weight: userData?.weight,
+      height: userData?.height,
+      goal: userData?.goal,
+      medicalConditions: userData?.medicalConditions,
+    });
   }
 
   async function handleLogOut() {
@@ -120,7 +151,6 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleChangePassword} className="space-y-4">
-                {/* Current Password */}
                 <div className="space-y-2">
                   <Label
                     htmlFor="current-pass"
@@ -133,10 +163,10 @@ export default function SettingsPage() {
                       id="current-pass"
                       type={showCurrent ? "text" : "password"}
                       placeholder="********"
-                      value={formData.currentPassword}
+                      value={password.currentPassword}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
+                        setPassword({
+                          ...password,
                           currentPassword: e.target.value,
                         })
                       }
@@ -170,10 +200,10 @@ export default function SettingsPage() {
                       id="new-pass"
                       type={showNew ? "text" : "password"}
                       placeholder="********"
-                      value={formData.newPassword}
+                      value={password.newPassword}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
+                        setPassword({
+                          ...password,
                           newPassword: e.target.value,
                         })
                       }
@@ -206,61 +236,170 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* 2. Notifications Toggle Section (Static Clean UI representation) */}
-          <Card className="bg-white border-gray-100 shadow-sm rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-base font-bold">Preferences</CardTitle>
-              <CardDescription className="text-xs">
-                Manage system-wide alerts and synchronization triggers.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100/50">
-                <div>
-                  <h4 className="text-xs font-bold text-gray-900">
-                    Order Updates
-                  </h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    Receive immediate dashboard alerts for shipping state
-                    triggers.
-                  </p>
+          {/* profile data */}
+          <form className="space-y-4">
+            {/* 1. Basic Identity Row */}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="fullname"
+                  className="text-xs font-semibold text-gray-700"
+                >
+                  Full Name
+                </Label>
+
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+
+                  <Input
+                    id="fullname"
+                    type="text"
+                    value={userData?.firstName}
+                    className="pl-10 bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
+                    required
+                  />
                 </div>
-                <input
-                  type="checkbox"
-                  /*                   checked={notifyOrders} 
-                  onChange={() => setNotifyOrders(!notifyOrders)}*/
-                  className="h-4 w-4 rounded text-[#0044CC] focus:ring-[#0044CC] cursor-pointer"
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="fullname"
+                  className="text-xs font-semibold text-gray-700"
+                >
+                  Last Name
+                </Label>
+
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+
+                  <Input
+                    id="fullname"
+                    type="text"
+                    value={userData?.lastName}
+                    className="pl-10 bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="phone"
+                  className="text-xs font-semibold text-gray-700"
+                >
+                  Phone Number
+                </Label>
+
+                <div className="relative">
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={userData?.phoneNumber}
+                    className="pl-3 bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Onboarding Metrics Row */}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="age"
+                  className="text-xs font-semibold text-gray-700"
+                >
+                  Age (years)
+                </Label>
+
+                <Input
+                  id="age"
+                  type="number"
+                  value={userData?.age}
+                  className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
+                  required
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100/50">
-                <div>
-                  <h4 className="text-xs font-bold text-gray-900">
-                    Clearance Threshold Triggers
-                  </h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    Notify when products with active near-expiry hit maximal
-                    clearance discount drops.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  /*  checked={notifyClearance} 
-                  onChange={() => setNotifyClearance(!notifyClearance)} */
-                  className="h-4 w-4 rounded text-[#0044CC] focus:ring-[#0044CC] cursor-pointer"
+              <div className="space-y-2">
+                <Label
+                  htmlFor="height"
+                  className="text-xs font-semibold text-gray-700"
+                >
+                  Height (cm)
+                </Label>
+
+                <Input
+                  id="height"
+                  type="number"
+                  value={userData?.height}
+                  className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
+                  required
                 />
               </div>
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="button"
-                  className="bg-[#cc0000] hover:bg-[#0033AA] text-white text-xs font-semibold px-5 h-9 rounded-md flex items-center gap-1.5 shadow-sm"
-                  onClick={handleLogOut}
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="weight"
+                  className="text-xs font-semibold text-gray-700"
                 >
-                  <LogOut className="h-3.5 w-3.5" /> Log Out
-                </button>
+                  Weight (kg)
+                </Label>
+
+                <div className="relative">
+                  <Dumbbell className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400/60" />
+
+                  <Input
+                    id="weight"
+                    type="number"
+                    value={userData?.weight}
+                    className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC] pr-10"
+                    required
+                  />
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* 3. Dropdown/Text for Fitness Strategy */}
+
+            <div className="space-y-2 pt-2">
+              <Label
+                htmlFor="strategy"
+                className="text-xs font-semibold text-gray-700"
+              >
+                Primary Goal Strategy
+              </Label>
+
+              <Input
+                id="strategy"
+                type="text"
+                value={userData?.goal}
+                className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
+                required
+              />
+            </div>
+
+            {/* Action CTA Button */}
+
+            <div className="pt-3 flex justify-end">
+              <Button
+                type="submit"
+                className="bg-[#0044CC] hover:bg-[#0033AA] text-white text-xs font-semibold px-5 h-9 rounded-md flex items-center gap-1.5 shadow-sm"
+              >
+                <Save className="h-3.5 w-3.5" /> Save Changes
+              </Button>
+            </div>
+          </form>
+          <div className="pt-3 flex justify-end">
+            <Button
+              type="button"
+              className="bg-[#cc0000] hover:bg-[#0033AA] text-white text-xs font-semibold px-5 h-9 rounded-md flex items-center gap-1.5 shadow-sm"
+              onClick={handleLogOut}
+            >
+              <LogOut className="h-3.5 w-3.5" /> Log Out
+            </Button>
+          </div>
         </div>
       </div>
     </div>
