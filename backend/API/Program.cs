@@ -12,6 +12,7 @@ using Core.Domain.Entities.Users;
 using Core.Infrastructure.Persistence;
 using Core.Infrastructure.Persistence.Repositories;
 using Core.Infrastructure.Services;
+using FluentValidation;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -71,6 +72,8 @@ builder.Services.Configure<ClearanceSettings>(builder.Configuration.GetSection("
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(RegisterUserCommand).Assembly));
+builder.Services.AddValidatorsFromAssembly(typeof(Core.Application.Features.Sales.Validators.AddToCartCommandValidator).Assembly);
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Core.Application.Behaviors.ValidationBehavior<,>));
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHttpClient<IPaymentService, PaymobPaymentService>();
