@@ -23,7 +23,7 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
-import { useAuthStore } from "@/src/components/auth/authStore";
+import { useAuthStore } from "@/src/components/store/authStore";
 import { useRouter } from "next/navigation";
 const BASE_URL = "https://sh-supplements.runasp.net";
 
