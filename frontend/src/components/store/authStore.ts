@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { api } from "./axiosInstance";
+import { api } from "../auth/axiosInstance";
 
 const BASE_URL = "https://sh-supplements.runasp.net/api";
 

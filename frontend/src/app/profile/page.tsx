@@ -2,17 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import {
-  User,
-  Mail,
-  ShieldCheck,
-  Dumbbell,
-  Target,
-  Save,
-} from "lucide-react";
+import { User, Mail, ShieldCheck, Dumbbell, Target, Save } from "lucide-react";
 
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/src/components/auth/authStore";
+import { useAuthStore } from "@/src/components/store/authStore";
 import {
   Card,
   CardContent,

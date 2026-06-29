@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useAuthStore } from "../auth/authStore";
+import { useAuthStore } from "../store/authStore";
 
 const BASE_URL = "https://sh-supplements.runasp.net/api";
 

@@ -1,203 +1,198 @@
 "use client";
 
-import { useEffect } from "react";
-import Link from "next/link";
-import {
-  Trash2,
-  Plus,
-  Minus,
-  ShoppingBag,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Separator } from "@/src/components/ui/separator";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/src/components/auth/authStore";
+import { useAuthStore } from "@/src/components/store/authStore";
+import { api } from "@/src/components/auth/axiosInstance";
+import { toast } from "sonner";
 
-// Mock Data أولية لمنتجات داخل السلة
-const INITIAL_CART = [
-  {
-    id: 1,
-    name: "Whey Protein Isolate - Vanilla",
-    brand: "Optimum Stack",
-    price: 29.99,
-    image:
-      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&q=80",
-    quantity: 1,
-  },
-  {
-    id: 3,
-    name: "Liquid BCAA - Blue Razz",
-    brand: "Recovery Core",
-    price: 21.0,
-    image:
-      "https://images.unsplash.com/photo-1606813902869-1f3e5c8b6f2d?w=300&q=80",
-    quantity: 2,
-  },
-];
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+}
 
 export default function CartPage() {
-  const router = useRouter();
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const accessToken = useAuthStore((state) => state.accessToken);
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   useEffect(() => {
+    setIsClient(true);
     if (!accessToken) {
       router.replace("/login");
     }
-  }, []);
+  }, [accessToken, router]);
+
+  useEffect(() => {
+    async function fetchCart() {
+      if (!accessToken) return;
+      try {
+        const response = await api.get(`/Carts/my-cart`);
+        setCart(response.data.items || []);
+      } catch (error) {
+        console.error("error fetching cart data");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (isClient) fetchCart();
+  }, [accessToken, isClient]);
+
+  const handleRemoveItem = async (cartItemId: number) => {
+    const previousCart = [...cart];
+    setCart(cart.filter((item) => item.id !== cartItemId));
+
+    try {
+      await api.delete(`/api/carts/remove/${cartItemId}`);
+      toast.success("Item removed");
+    } catch (error) {
+      setCart(previousCart);
+      toast.error("Failed to remove item");
+    }
+  };
+  // setCart(cart.map(item => item.id === cartItemId ? { ...item, quantity: newQuantity } : item));
+  const handleUpdateQuantity = async (
+    cartItemId: number,
+    newQuantity: number,
+  ) => {
+    if (newQuantity < 1) return;
+
+    const previousCart = [...cart];
+    setCart(
+      cart.map((item) =>
+        item.id === cartItemId ? { ...item, quantity: newQuantity } : item,
+      ),
+    );
+
+    try {
+      await api.put(`/api/Carts/update-quantity`, {
+        cartItemId: cartItemId,
+        quantity: newQuantity,
+      });
+    } catch (error) {
+      setCart(previousCart);
+      toast.error("Failed to update quantity");
+    }
+  };
+
+  if (!isClient || !accessToken) return null;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-gray-500">
+        Loading your cart...
+      </div>
+    );
+  }
+
+  if (cart.length === 0) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center min-h-[50vh] space-y-4"
+        dir="ltr"
+      >
+        <h2 className="text-2xl font-bold text-gray-800">Your cart is empty</h2>
+        <Button onClick={() => router.push("/products")} className="rounded-xl">
+          Browse Products
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8" dir="ltr">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-          <ShoppingBag className="h-6 w-6 text-[#0044CC]" /> Your Shopping Cart
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Review your items and proceed to secure checkout.
-        </p>
-      </div>
-      {/* {cartItems.length > 0 ? ( */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Side: Items List */}
-        <div className="lg:col-span-2 space-y-4">
-          {/*             {cartItems.map((item) => (
-           */}{" "}
-          <Card
-            /*                 key={item.id}
-             */ className="bg-white border-gray-100 shadow-sm rounded-xl overflow-hidden group"
+    <div className="max-w-4xl mx-auto p-6 space-y-8" dir="ltr">
+      <h1 className="text-3xl font-extrabold text-gray-900">Shopping Cart</h1>
+
+      <div className="space-y-4">
+        {cart.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl shadow-sm"
           >
-            <CardContent className="p-4 flex items-center justify-between gap-4">
-              {/* Product Image & Info */}
-              <div className="flex items-center gap-4 flex-1">
-                <div className="h-20 w-20 bg-gray-50 border border-gray-100 rounded-lg overflow-hidden relative shrink-0">
-                  {/* <Image
-                        src={item.image}
-                        alt={item.name} 
-                        fill
-                        className="object-contain p-1.5 mix-blend-multiply"
-                      /> */}
-                </div>
-                {/* <div className="space-y-0.5 max-w-sm">
-                      <span className="text-[10px] text-gray-400 block font-medium uppercase tracking-wider">
-                        {item.brand}
-                      </span>
-                      <h3 className="text-xs font-bold text-gray-900 line-clamp-1">
-                        {item.name}
-                      </h3>
-                      <p className="text-xs font-extrabold text-[#0044CC] pt-1">
-                        ${item.price.toFixed(2)}
-                      </p>
-                    </div> */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center p-2">
+                {item.imageUrl ? (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="max-h-full object-contain mix-blend-multiply"
+                  />
+                ) : (
+                  <span className="text-xs text-gray-400">No Img</span>
+                )}
               </div>
+              <div>
+                <h3 className="font-bold text-gray-900">{item.name}</h3>
+                <p className="text-sm text-gray-500">${item.price}</p>
+              </div>
+            </div>
 
-              {/* Quantity Actions & Delete */}
-              <div className="flex items-center gap-6 shrink-0">
-                <div className="flex items-center border border-gray-200 rounded-md bg-gray-50 h-8">
-                  <button
-                    title="Decrease Quantity"
-                    /*                         onClick={() => updateQuantity(item.id, false)}
-                     */ className="px-2 text-gray-500 hover:text-gray-900 transition-colors h-full flex items-center"
-                  >
-                    <Minus className="h-3 w-3" />
-                  </button>
-                  <span className="px-2 text-xs font-bold text-gray-800 min-w-[24px] text-center select-none">
-                    {/*                         {item.quantity}
-                     */}{" "}
-                  </span>
-                  <button
-                    title="Increase Quantity"
-                    /*                         onClick={() => updateQuantity(item.id, true)}
-                     */ className="px-2 text-gray-500 hover:text-gray-900 transition-colors h-full flex items-center"
-                  >
-                    <Plus className="h-3 w-3" />
-                  </button>
-                </div>
-
-                <button
-                  /*                       onClick={() => removeItem(item.id)}
-                   */ className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                  title="Remove Item"
+            <div className="flex items-center gap-6">
+              {/* أزرار تعديل الكمية */}
+              <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-md"
+                  onClick={() =>
+                    handleUpdateQuantity(item.id, item.quantity - 1)
+                  }
+                  disabled={item.quantity <= 1}
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-          {/*             ))}
-           */}{" "}
-        </div>
-
-        {/* Right Side: Order Summary */}
-        <div className="lg:col-span-1">
-          <Card className="bg-white border-gray-100 shadow-sm rounded-xl sticky top-24">
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-base font-bold text-gray-900">
-                Order Summary
-              </h2>
-
-              <div className="space-y-2 text-xs font-medium text-gray-600">
-                {/* <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span className="text-gray-900 font-bold">
-                      ${subtotal.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Shipping Fee</span>
-                    <span className="text-gray-900 font-bold">
-                      ${shipping.toFixed(2)}
-                    </span>
-                  </div> */}
-              </div>
-
-              <Separator className="bg-gray-100" />
-
-              <div className="flex justify-between text-sm font-black text-gray-900">
-                <span>Total Amount</span>
-                <span className="text-[#0044CC] text-base">
-                  {/*                     ${total.toFixed(2)}
-                   */}{" "}
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="w-6 text-center font-medium text-sm">
+                  {item.quantity}
                 </span>
-              </div>
-
-              <div className="pt-2">
-                <Button className="w-full bg-[#FF6600] hover:bg-[#E05500] text-white font-semibold text-xs py-2.5 rounded-md flex items-center justify-center gap-1.5 shadow-sm transition-all">
-                  Proceed to Checkout <ArrowRight className="h-3.5 w-3.5" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-md"
+                  onClick={() =>
+                    handleUpdateQuantity(item.id, item.quantity + 1)
+                  }
+                >
+                  <Plus className="w-4 h-4" />
                 </Button>
               </div>
 
-              {/* Secure Badge */}
-              <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-400 font-medium pt-2">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Secure
-                SSL Encrypted Checkout
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              <p className="font-bold text-lg text-gray-900 w-20 text-right">
+                ${(item.price * item.quantity).toFixed(2)}
+              </p>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleRemoveItem(item.id)}
+                className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl"
+              >
+                <Trash2 className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        ))}
       </div>
-      {/* ) : (
-         Empty State */}
-      <div className="text-center py-20 bg-white border border-gray-100 rounded-xl space-y-3">
-        <span className="text-4xl">🛒</span>
-        <h3 className="text-sm font-bold text-gray-900 pt-2">
-          Your Cart is Empty
-        </h3>
-        <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
-          Looks like you haven&apos;t added any premium supplements to your
-          stack yet.
-        </p>
-        <div className="pt-2">
-          <Link href="/categories">
-            <Button className="bg-[#0044CC] hover:bg-[#0033AA] text-white text-xs font-semibold px-5 h-9 rounded-md">
-              Browse Catalog
-            </Button>
-          </Link>
+
+      <div className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl mt-8">
+        <div>
+          <p className="text-sm text-gray-500">Total Amount</p>
+          <p className="text-2xl font-extrabold text-gray-900">
+            ${total.toFixed(2)}
+          </p>
         </div>
+        <Button size="lg" className="rounded-xl">
+          Proceed to Checkout
+        </Button>
       </div>
-      {/*       )}
-       */}{" "}
     </div>
   );
 }
