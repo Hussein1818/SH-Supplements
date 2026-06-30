@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
 import { TrendingUp, Scale, Flame, Award, Plus, Calendar } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import {
@@ -12,62 +11,21 @@ import {
 } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
-
-// Mock Data للسجلات السابقة
-const INITIAL_LOGS = [
-  {
-    id: 1,
-    date: "June 15, 2026",
-    weight: 78.5,
-    bodyFat: 14.2,
-    muscleMass: 38.1,
-  },
-  {
-    id: 2,
-    date: "June 01, 2026",
-    weight: 79.2,
-    bodyFat: 14.8,
-    muscleMass: 37.9,
-  },
-  {
-    id: 3,
-    date: "May 15, 2026",
-    weight: 80.0,
-    bodyFat: 15.5,
-    muscleMass: 37.6,
-  },
-];
+import { useEffect, useState } from "react";
+import { useAuthStore } from "@/src/components/store/authStore";
+import { useRouter } from "next/navigation";
 
 export default function ProgressPage() {
-  const [logs, setLogs] = useState(INITIAL_LOGS);
-  const [weight, setWeight] = useState("");
-  const [bodyFat, setBodyFat] = useState("");
-  const [muscleMass, setMuscleMass] = useState("");
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
 
-  const handleAddLog = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!weight) return;
-
-    const newLog = {
-      id: Date.now(),
-      date: new Date().toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      }),
-      weight: parseFloat(weight),
-      bodyFat: bodyFat ? parseFloat(bodyFat) : 0,
-      muscleMass: muscleMass ? parseFloat(muscleMass) : 0,
-    };
-
-    setLogs([newLog, ...logs]);
-    setWeight("");
-    setBodyFat("");
-    setMuscleMass("");
-  };
-
-  // أحدث مقاييس مسجلة لعرضها في الكروت العلوية
-  const latestMetrics = logs[0] || { weight: 0, bodyFat: 0, muscleMass: 0 };
+  useEffect(() => {
+    setIsClient(true);
+    if (!accessToken) {
+      router.replace("/login");
+    }
+  }, [accessToken, router]);
 
   return (
     <div className="space-y-8" dir="ltr">
@@ -95,7 +53,8 @@ export default function ProgressPage() {
                 Current Weight
               </span>
               <span className="text-xl font-black text-gray-900">
-                {latestMetrics.weight || "--"}{" "}
+                {/*                 {latestMetrics.weight || "--"}{" "}
+                 */}{" "}
                 <span className="text-xs font-normal text-gray-500">kg</span>
               </span>
             </div>
@@ -112,7 +71,8 @@ export default function ProgressPage() {
                 Body Fat
               </span>
               <span className="text-xl font-black text-gray-900">
-                {latestMetrics.bodyFat ? `${latestMetrics.bodyFat}%` : "--"}
+                {/*                 {latestMetrics.bodyFat ? `${latestMetrics.bodyFat}%` : "--"}
+                 */}{" "}
               </span>
             </div>
           </CardContent>
@@ -128,9 +88,9 @@ export default function ProgressPage() {
                 Muscle Mass
               </span>
               <span className="text-xl font-black text-gray-900">
-                {latestMetrics.muscleMass
+                {/*  {latestMetrics.muscleMass
                   ? `${latestMetrics.muscleMass} kg`
-                  : "--"}
+                  : "--"} */}
               </span>
             </div>
           </CardContent>
@@ -150,7 +110,7 @@ export default function ProgressPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleAddLog} className="space-y-4">
+            <form /* onSubmit={handleAddLog} */ className="space-y-4">
               <div className="space-y-2">
                 <Label
                   htmlFor="weight"
@@ -163,8 +123,8 @@ export default function ProgressPage() {
                   type="number"
                   step="0.1"
                   placeholder="e.g. 78.5"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  /* value={weight}
+                  onChange={(e) => setWeight(e.target.value)} */
                   className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
                   required
                 />
@@ -182,8 +142,8 @@ export default function ProgressPage() {
                   type="number"
                   step="0.1"
                   placeholder="e.g. 14.2"
-                  value={bodyFat}
-                  onChange={(e) => setBodyFat(e.target.value)}
+                  /* value={bodyFat}
+                  onChange={(e) => setBodyFat(e.target.value)} */
                   className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
                 />
               </div>
@@ -200,8 +160,8 @@ export default function ProgressPage() {
                   type="number"
                   step="0.1"
                   placeholder="e.g. 38.5"
-                  value={muscleMass}
-                  onChange={(e) => setMuscleMass(e.target.value)}
+                  /* value={muscleMass}
+                  onChange={(e) => setMuscleMass(e.target.value)} */
                   className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
                 />
               </div>
@@ -238,7 +198,7 @@ export default function ProgressPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
+                  {/* {logs.map((log) => (
                     <tr
                       key={log.id}
                       className="border-b border-gray-50/50 hover:bg-gray-50/50 transition-colors"
@@ -256,7 +216,7 @@ export default function ProgressPage() {
                         {log.muscleMass ? `${log.muscleMass} kg` : "--"}
                       </td>
                     </tr>
-                  ))}
+                  ))} */}
                 </tbody>
               </table>
             </div>
