@@ -77,6 +77,7 @@ export default function ProgressPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
+  const [visibleRecords, setVisibleRecords] = useState(5);
 
   const [activeTab, setActiveTab] = useState<"measurements" | "calculator">(
     "measurements",
@@ -85,7 +86,6 @@ export default function ProgressPage() {
   const [progress, setProgress] = useState<ProgressData[]>([]);
   const [userHistory, setUserHistory] = useState<HistoryData[]>([]);
 
-  // دوال جلب البيانات مفصولة عشان نقدر نستدعيها تاني بعد الـ POST
   const fetchProgressData = async () => {
     try {
       const response = await api.get("/Health/progress-tracker");
@@ -118,7 +118,6 @@ export default function ProgressPage() {
     }
   }, [isClient, accessToken]);
 
-  // post endpoint Health/measurements
   const [measurements, setMeasurements] = useState({
     weight: 0,
     bodyFatPercentage: 0,
@@ -134,20 +133,18 @@ export default function ProgressPage() {
         muscleMassPercentage: measurements.muscleMassPercentage,
       });
       toast.success(response.data.message || "Measurements logged!");
-      // تحديث الداتا بعد الحفظ مباشرة
       fetchProgressData();
     } catch (error) {
       toast.error("Failed to save measurements");
     }
   }
 
-  // post endpoint health/metrics/calculate-and-save
   const [metrics, setMetrics] = useState({
     weight: 0,
     height: 0,
     age: 0,
     gender: 1,
-    activityLevel: 1, // تم تعديل القيمة المبدئية لتطابق الخيارات
+    activityLevel: 1,
   });
 
   async function handleMetrics(e: React.FormEvent<HTMLFormElement>) {
@@ -161,7 +158,6 @@ export default function ProgressPage() {
         activityLevel: metrics.activityLevel,
       });
       toast.success(response.data.message || "Metrics calculated!");
-      // تحديث الداتا بعد الحفظ مباشرة
       fetchUserHistory();
     } catch (error) {
       toast.error("Failed to calculate metrics");
@@ -170,20 +166,52 @@ export default function ProgressPage() {
 
   if (!accessToken || !isClient) return null;
 
-  // --- استخراج أحدث البيانات للكروت العلوية ---
-  const latestProgress =
-    progress.length > 0 ? progress[progress.length - 1] : null;
-  const latestHistory = userHistory.length > 0 ? userHistory[0] : null; // لو راجعة من الأحدث للأقدم، استخدم 0، لو العكس استخدم [userHistory.length - 1]
+  const latestWeight =
+    progress.length > 0 ? progress[progress.length - 1].weight : 0;
 
-  // --- إعداد بيانات الرسم البياني دايناميكياً ---
+  const latestBodyFat =
+    [...progress]
+      .reverse()
+      .find((p) => p.bodyFatPercentage != null && p.bodyFatPercentage > 0)
+      ?.bodyFatPercentage || 0;
+
+  const latestMuscle =
+    [...progress]
+      .reverse()
+      .find((p) => p.muscleMassPercentage != null && p.muscleMassPercentage > 0)
+      ?.muscleMassPercentage || 0;
+
+  const latestHistoryValid = userHistory.find(
+    (h) => h.tdeeValue > 0 && h.bmiValue > 0,
+  );
+  const latestTDEE = latestHistoryValid?.tdeeValue || 0;
+  const latestBMI = latestHistoryValid?.bmiValue || 0;
+
+  let lastValidBF = 0;
+  let lastValidMuscle = 0;
+
+  const cleanChartData = progress.map((item) => {
+    if (item.bodyFatPercentage != null && item.bodyFatPercentage > 0)
+      lastValidBF = item.bodyFatPercentage;
+    if (item.muscleMassPercentage != null && item.muscleMassPercentage > 0)
+      lastValidMuscle = item.muscleMassPercentage;
+
+    return {
+      ...item,
+      cleanBodyFat: item.bodyFatPercentage || lastValidBF,
+      cleanMuscle: item.muscleMassPercentage || lastValidMuscle,
+    };
+  });
+
+  // --- 3. إعداد بيانات الرسم البياني دايناميكياً ---
   const chartData = {
-    labels: progress.map((item) =>
+    labels: cleanChartData.map((item) =>
       new Date(item.dateRecorded).toLocaleDateString(),
     ),
     datasets: [
       {
         label: "Weight (kg)",
-        data: progress.map((item) => item.weight),
+        data: cleanChartData.map((item) => item.weight),
         borderColor: "#0044CC",
         backgroundColor: "rgba(0, 68, 204, 0.04)",
         tension: 0.3,
@@ -192,7 +220,7 @@ export default function ProgressPage() {
       },
       {
         label: "Body Fat (%)",
-        data: progress.map((item) => item.bodyFatPercentage),
+        data: cleanChartData.map((item) => item.cleanBodyFat),
         borderColor: "#FF6600",
         backgroundColor: "transparent",
         tension: 0.3,
@@ -200,7 +228,7 @@ export default function ProgressPage() {
       },
       {
         label: "Muscle Mass (%)",
-        data: progress.map((item) => item.muscleMassPercentage),
+        data: cleanChartData.map((item) => item.cleanMuscle),
         borderColor: "#10b981",
         backgroundColor: "transparent",
         tension: 0.3,
@@ -255,7 +283,7 @@ export default function ProgressPage() {
               </span>
             </div>
             <span className="text-xl font-black text-gray-900">
-              {latestProgress?.weight || "0"} kg
+              {latestWeight} kg
             </span>
           </CardContent>
         </Card>
@@ -269,7 +297,7 @@ export default function ProgressPage() {
               </span>
             </div>
             <span className="text-xl font-black text-gray-900">
-              {latestProgress?.bodyFatPercentage || "0"}%
+              {latestBodyFat}%
             </span>
           </CardContent>
         </Card>
@@ -283,7 +311,7 @@ export default function ProgressPage() {
               </span>
             </div>
             <span className="text-xl font-black text-gray-900">
-              {latestProgress?.muscleMassPercentage || "0"}%
+              {latestMuscle}%
             </span>
           </CardContent>
         </Card>
@@ -297,7 +325,7 @@ export default function ProgressPage() {
               </span>
             </div>
             <span className="text-xl font-black text-gray-900">
-              {latestHistory?.tdeeValue || "0"}
+              {latestTDEE}
             </span>
           </CardContent>
         </Card>
@@ -311,7 +339,7 @@ export default function ProgressPage() {
               </span>
             </div>
             <span className="text-xl font-black text-gray-900">
-              {latestHistory?.bmiValue || "0"}
+              {latestBMI}
             </span>
           </CardContent>
         </Card>
@@ -561,6 +589,7 @@ export default function ProgressPage() {
             </div>
 
             {/* 2. Data Table */}
+            {/* 2. Data Table */}
             <div>
               <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-gray-500" /> Data Log
@@ -577,29 +606,34 @@ export default function ProgressPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* عرض البيانات معكوسة (الأحدث فوق) */}
-                    {[...progress].reverse().map((item, index) => (
-                      <tr
-                        key={index}
-                        className="border-b border-gray-50/50 hover:bg-gray-50/50 transition-colors"
-                      >
-                        <td className="py-3.5 px-2 font-bold text-gray-900">
-                          {new Date(item.dateRecorded).toLocaleDateString()}
-                        </td>
-                        <td className="py-3.5 px-2 font-black text-[#0044CC]">
-                          {item.weight} kg
-                        </td>
-                        <td className="py-3.5 px-2 font-semibold text-gray-700">
-                          {item.bmiValue}
-                        </td>
-                        <td className="py-3.5 px-2 font-semibold text-gray-700">
-                          {item.bodyFatPercentage}%
-                        </td>
-                        <td className="py-3.5 px-2 font-semibold text-emerald-600">
-                          {item.muscleMassPercentage}%
-                        </td>
-                      </tr>
-                    ))}
+                    {/* عرض البيانات معكوسة ومقصوصة بناءً على العدد المرئي */}
+                    {[...progress]
+                      .reverse()
+                      .slice(0, visibleRecords)
+                      .map((item, index) => (
+                        <tr
+                          key={index}
+                          className="border-b border-gray-50/50 hover:bg-gray-50/50 transition-colors"
+                        >
+                          <td className="py-3.5 px-2 font-bold text-gray-900">
+                            {new Date(item.dateRecorded).toLocaleDateString()}
+                          </td>
+                          <td className="py-3.5 px-2 font-black text-[#0044CC]">
+                            {item.weight} kg
+                          </td>
+                          <td className="py-3.5 px-2 font-semibold text-gray-700">
+                            {item.bmiValue || "-"}
+                          </td>
+                          <td className="py-3.5 px-2 font-semibold text-gray-700">
+                            {item.bodyFatPercentage || "-"}
+                            {item.bodyFatPercentage ? "%" : ""}
+                          </td>
+                          <td className="py-3.5 px-2 font-semibold text-emerald-600">
+                            {item.muscleMassPercentage || "-"}
+                            {item.muscleMassPercentage ? "%" : ""}
+                          </td>
+                        </tr>
+                      ))}
                     {progress.length === 0 && (
                       <tr>
                         <td
@@ -613,6 +647,24 @@ export default function ProgressPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* زرار التحكم في عرض السجلات */}
+              {progress.length > 5 && (
+                <div className="flex justify-center mt-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-gray-500 hover:text-[#0044CC] hover:bg-blue-50 transition-colors"
+                    onClick={() =>
+                      setVisibleRecords(
+                        visibleRecords === 5 ? progress.length : 5,
+                      )
+                    }
+                  >
+                    {visibleRecords === 5 ? "View All Records" : "Show Less"}
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
