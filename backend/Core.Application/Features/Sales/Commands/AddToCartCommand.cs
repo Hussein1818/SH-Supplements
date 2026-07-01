@@ -12,7 +12,7 @@ namespace Core.Application.Features.Sales.Commands;
 
 public class AddToCartCommand : IRequest<Guid>
 {
-    [JsonIgnore]
+    
     public Guid ProductId { get; set; }
     public int Quantity { get; set; }
 
