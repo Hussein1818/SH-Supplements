@@ -14,4 +14,5 @@ public class ProductListDto
     public string BrandName { get; set; } = string.Empty;
     public UserGoal Goal { get; set; }
     public double AverageRating { get; set; }
+    public bool InStock { get; set; }
 }
