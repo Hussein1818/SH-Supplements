@@ -40,7 +40,6 @@ export const ProductCard = ({ product }: { product: any }) => {
       toast.error("Failed to notify");
     }
   };
-  console.log("Product Data:", product);
   return (
     <div className="group relative bg-white border border-gray-100 rounded-3xl p-5 transition-all hover:shadow-xl hover:shadow-blue-50/50">
       <div className="aspect-square bg-gray-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center">
