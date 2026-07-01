@@ -68,9 +68,10 @@ public class GlobalExceptionMiddleware
 
         context.Response.StatusCode = statusCode;
 
+        // Temporary Dev Edit: Added DevDetails to expose the actual DB error
         var result = validationErrors != null
-            ? JsonSerializer.Serialize(new { Message = message, Errors = validationErrors })
-            : JsonSerializer.Serialize(new { Message = message });
+            ? JsonSerializer.Serialize(new { Message = message, Errors = validationErrors, DevDetails = exception.InnerException?.Message ?? exception.Message })
+            : JsonSerializer.Serialize(new { Message = message, DevDetails = exception.InnerException?.Message ?? exception.Message });
 
         return context.Response.WriteAsync(result);
     }
