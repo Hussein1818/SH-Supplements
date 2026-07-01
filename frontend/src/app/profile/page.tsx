@@ -1,15 +1,26 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import { User, Mail, ShieldCheck, Dumbbell, Target, Save } from "lucide-react";
-
+import { useEffect, useState } from "react";
+import {
+  User,
+  ShieldCheck,
+  Pencil,
+  Save,
+  X,
+  Phone,
+  Scale,
+  Ruler,
+  Target,
+  MapPin,
+  Wallet,
+  Activity,
+  CheckCircle2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/src/components/store/authStore";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
@@ -17,228 +28,317 @@ import { Badge } from "@/src/components/ui/badge";
 import { Label } from "@/src/components/ui/label";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
+import { api } from "@/src/components/auth/axiosInstance";
+import { toast } from "sonner";
+
+// تعريف أنواع البيانات لتطابق الـ JSON
+interface AddressData {
+  id: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+type UserData = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  age: number;
+  weight: number;
+  height: number;
+  goal: number;
+  medicalConditions: string | null;
+  walletBalance: number;
+  addresses: AddressData[]; // ضفنا العناوين هنا
+};
+
+// تحديد الحقول البسيطة اللي هتتعرض في الـ Loop
+type SimpleFieldKey =
+  | "firstName"
+  | "lastName"
+  | "phoneNumber"
+  | "age"
+  | "weight"
+  | "height"
+  | "goal";
 
 export default function ProfilePage() {
-  const [name, setName] = useState("Mohamed Ibrahim");
-  const [email, setEmail] = useState("mohamed.ibrahim@example.com");
-  const [age, setAge] = useState("22");
-  const [height, setHeight] = useState("178");
-  const [weight, setWeight] = useState("75");
-  const [goal, setGoal] = useState("Lean Mass Gain (Bulking)");
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [editForm, setEditForm] = useState<UserData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const accessToken = useAuthStore((state) => state.accessToken);
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
     if (!accessToken) {
       router.replace("/login");
+      return;
     }
+    // جلب بيانات البروفايل
+    api
+      .get("/User/profile")
+      .then((res) => {
+        setUserData(res.data);
+        setEditForm(res.data);
+      })
+      .catch(() => {
+        toast.error("Failed to load profile data");
+      });
   }, [accessToken, router]);
 
-  if (!accessToken || !isClient) return null;
+  const handleSave = async () => {
+    if (!editForm) return;
+    try {
+      const payload = {
+        userId: userData?.id,
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
+        phoneNumber: editForm.phoneNumber || "",
+        age: Number(editForm.age),
+        weight: Number(editForm.weight),
+        height: Number(editForm.height),
+        goal: Number(editForm.goal),
+        medicalConditions: editForm.medicalConditions || "",
+      };
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    // هنا مستقبلاً هيتم استدعاء الـ API لحفظ البيانات في الـ .NET
-    alert("Profile updated successfully!");
+      await api.put("/User/profile", payload);
+      setUserData(editForm);
+      setIsEditing(false);
+      toast.success("Profile updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update profile");
+    }
   };
 
+  if (!userData || !editForm)
+    return (
+      <div className="p-10 text-center font-bold text-gray-500">
+        Loading Profile...
+      </div>
+    );
+
   return (
-    <div className="space-y-8 max-w-4xl" dir="ltr">
+    <div className="space-y-8 max-w-5xl mx-auto p-4" dir="ltr">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-          <User className="h-6 w-6 text-[#0044CC]" /> Account Settings
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Manage your identity, security credentials, and trackable personal
-          fitness configurations.
-        </p>
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
+            <User className="h-6 w-6 text-[#0044CC]" /> My Profile
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage your personal information and addresses.
+          </p>
+        </div>
+        <Button
+          variant={isEditing ? "outline" : "default"}
+          onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
+          className={
+            !isEditing
+              ? "bg-[#0044CC] hover:bg-[#0033AA] text-white"
+              : "border-[#0044CC] text-[#0044CC] hover:bg-blue-50"
+          }
+        >
+          {isEditing ? (
+            <>
+              <Save className="h-4 w-4 mr-2" /> Save Changes
+            </>
+          ) : (
+            <>
+              <Pencil className="h-4 w-4 mr-2" /> Edit Profile
+            </>
+          )}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Side: Brief Avatar Card & Stats */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card className="bg-white border-gray-100 shadow-sm rounded-xl text-center">
-            <CardContent className="pt-6 pb-6 space-y-4 flex flex-col items-center">
-              <div className="h-20 w-20 rounded-full bg-gray-200 overflow-hidden border-2 border-[#0044CC]/20 relative">
-                <Image
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80"
-                  alt="Profile Avatar"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <h2 className="text-sm font-black text-gray-900 flex items-center justify-center gap-1">
-                  {name}{" "}
-                  <ShieldCheck className="h-4 w-4 text-emerald-500 fill-emerald-50" />
-                </h2>
-                <p className="text-xs text-gray-400 mt-0.5">{email}</p>
-              </div>
-              <Badge
-                variant="secondary"
-                className="bg-[#0044CC]/5 text-[#0044CC] hover:bg-[#0044CC]/5 border border-[#0044CC]/10 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-              >
-                Tier 1 Athlete
-              </Badge>
-            </CardContent>
-          </Card>
+        {/* Left Sidebar (Summary Card) */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="bg-white border-gray-100 shadow-sm rounded-xl text-center p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-[#0044CC]"></div>
+            <div className="w-20 h-20 mx-auto bg-blue-50 rounded-full flex items-center justify-center mb-4">
+              <User className="h-10 w-10 text-[#0044CC]" />
+            </div>
+            <h2 className="text-lg font-black text-gray-900 flex items-center justify-center gap-1">
+              {userData.firstName} {userData.lastName}
+              <ShieldCheck className="h-5 w-5 text-emerald-500" />
+            </h2>
+            <Badge className="mt-2 bg-[#0044CC]/10 text-[#0044CC] border-none hover:bg-[#0044CC]/20">
+              Verified User
+            </Badge>
 
-          {/* Fitness Goal Quick Box */}
-          <Card className="bg-[#FAF6F0] border border-[#FF6600]/10 rounded-xl">
-            <CardContent className="p-4 space-y-2">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block flex items-center gap-1">
-                <Target className="h-3.5 w-3.5 text-[#FF6600]" /> Active Fitness
-                Strategy
-              </span>
-              <p className="text-xs font-black text-gray-800">{goal}</p>
-            </CardContent>
+            <div className="mt-6 pt-6 border-t border-gray-50">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Wallet className="h-4 w-4 text-[#FF6600]" />
+                  <span className="text-xs font-bold uppercase">
+                    Wallet Balance
+                  </span>
+                </div>
+                <span className="font-black text-[#FF6600]">
+                  {userData.walletBalance.toFixed(2)} EGP
+                </span>
+              </div>
+            </div>
           </Card>
         </div>
 
-        {/* Right Side: Account & Onboarding Info Forms */}
+        {/* Right Content Area */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Personal Info Card */}
           <Card className="bg-white border-gray-100 shadow-sm rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-base font-bold">
-                Personal Profile & Physical Metrics
+            <CardHeader className="border-b border-gray-50 pb-4">
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <User className="h-5 w-5 text-[#0044CC]" /> Personal Information
               </CardTitle>
-              <CardDescription className="text-xs">
-                Update your core registry data and physical dimensions.
-              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                {/* 1. Basic Identity Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="fullname"
-                      className="text-xs font-semibold text-gray-700"
-                    >
-                      Full Name
+            <CardContent className="space-y-6 pt-6">
+              {/* Dynamic Grid for basic fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { label: "First Name", key: "firstName", icon: User },
+                  { label: "Last Name", key: "lastName", icon: User },
+                  { label: "Phone Number", key: "phoneNumber", icon: Phone },
+                  { label: "Age", key: "age", icon: User },
+                  { label: "Weight (kg)", key: "weight", icon: Scale },
+                  { label: "Height (cm)", key: "height", icon: Ruler },
+                  { label: "Goal (kg)", key: "goal", icon: Target },
+                ].map((field) => (
+                  <div key={field.key} className="space-y-1.5">
+                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      {field.label}
                     </Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    {isEditing ? (
                       <Input
-                        id="fullname"
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="pl-10 bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
-                        required
+                        type={
+                          ["age", "weight", "height", "goal"].includes(
+                            field.key,
+                          )
+                            ? "number"
+                            : "text"
+                        }
+                        className="bg-gray-50 border-gray-200 focus:bg-white"
+                        value={editForm[field.key as SimpleFieldKey]}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            [field.key]: e.target.value,
+                          })
+                        }
                       />
-                    </div>
+                    ) : (
+                      <p className="p-2.5 bg-gray-50 rounded-lg text-sm font-semibold text-gray-900 border border-gray-100">
+                        {userData[field.key as SimpleFieldKey] || "-"}
+                      </p>
+                    )}
                   </div>
+                ))}
+              </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="email"
-                      className="text-xs font-semibold text-gray-700"
-                    >
-                      Email Address
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        disabled
-                        className="pl-10 bg-[#F4F4F5] border-none opacity-60 cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Onboarding Metrics Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="age"
-                      className="text-xs font-semibold text-gray-700"
-                    >
-                      Age (years)
-                    </Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      value={age}
-                      onChange={(e) => setAge(e.target.value)}
-                      className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="height"
-                      className="text-xs font-semibold text-gray-700"
-                    >
-                      Height (cm)
-                    </Label>
-                    <Input
-                      id="height"
-                      type="number"
-                      value={height}
-                      onChange={(e) => setHeight(e.target.value)}
-                      className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="weight"
-                      className="text-xs font-semibold text-gray-700"
-                    >
-                      Weight (kg)
-                    </Label>
-                    <div className="relative">
-                      <Dumbbell className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400/60" />
-                      <Input
-                        id="weight"
-                        type="number"
-                        value={weight}
-                        onChange={(e) => setWeight(e.target.value)}
-                        className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC] pr-10"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Dropdown/Text for Fitness Strategy */}
-                <div className="space-y-2 pt-2">
-                  <Label
-                    htmlFor="strategy"
-                    className="text-xs font-semibold text-gray-700"
-                  >
-                    Primary Goal Strategy
-                  </Label>
+              {/* Medical Conditions (Full Width) */}
+              <div className="space-y-1.5 pt-2 border-t border-gray-50">
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Activity className="h-4 w-4 text-rose-500" /> Medical
+                  Conditions / Allergies
+                </Label>
+                {isEditing ? (
                   <Input
-                    id="strategy"
                     type="text"
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC]"
-                    required
+                    className="bg-gray-50 border-gray-200 focus:bg-white"
+                    placeholder="E.g., Lactose intolerant, diabetes..."
+                    value={editForm.medicalConditions || ""}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        medicalConditions: e.target.value,
+                      })
+                    }
                   />
-                </div>
+                ) : (
+                  <p className="p-3 bg-rose-50/50 rounded-lg text-sm text-gray-700 border border-rose-100/50 min-h-[60px]">
+                    {userData.medicalConditions || "None specified."}
+                  </p>
+                )}
+              </div>
 
-                {/* Action CTA Button */}
-                <div className="pt-3 flex justify-end">
+              {/* Edit Mode Cancel Button */}
+              {isEditing && (
+                <div className="pt-2">
                   <Button
-                    type="submit"
-                    className="bg-[#0044CC] hover:bg-[#0033AA] text-white text-xs font-semibold px-5 h-9 rounded-md flex items-center gap-1.5 shadow-sm"
+                    variant="ghost"
+                    className="w-full text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditForm(userData); // إرجاع البيانات لوضعها الأصلي
+                    }}
                   >
-                    <Save className="h-3.5 w-3.5" /> Save Changes
+                    <X className="h-4 w-4 mr-2" /> Cancel Editing
                   </Button>
                 </div>
-              </form>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Addresses Card (Read Only in Profile) */}
+          <Card className="bg-white border-gray-100 shadow-sm rounded-xl">
+            <CardHeader className="border-b border-gray-50 pb-4 flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-[#0044CC]" /> Saved Addresses
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs font-bold"
+                onClick={() => router.push("/settings")} // توجيهه لصفحة الإعدادات لو عايز يعدل
+              >
+                Manage
+              </Button>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {userData.addresses && userData.addresses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {userData.addresses.map((addr) => (
+                    <div
+                      key={addr.id}
+                      className={`p-4 rounded-xl border relative ${
+                        addr.isDefault
+                          ? "border-[#0044CC] bg-blue-50/30"
+                          : "border-gray-200 bg-gray-50"
+                      }`}
+                    >
+                      {addr.isDefault && (
+                        <div className="absolute top-0 right-0 bg-[#0044CC] text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg flex items-center gap-1 uppercase tracking-wider">
+                          <CheckCircle2 className="h-3 w-3" /> Default
+                        </div>
+                      )}
+                      <p className="font-bold text-gray-900 text-sm mb-1 pr-16">
+                        {addr.street}
+                      </p>
+                      <p className="text-xs text-gray-500 font-medium">
+                        {addr.city && `${addr.city}, `}
+                        {addr.state && `${addr.state}, `}
+                        {addr.country}
+                      </p>
+                      {addr.zipCode && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          ZIP: {addr.zipCode}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  <MapPin className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">
+                    No addresses saved yet.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
