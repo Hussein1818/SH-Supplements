@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Settings,
   Shield,
-  Bell,
-  Key,
-  RefreshCw,
+  MapPin,
   Eye,
   EyeOff,
   LogOut,
+  RefreshCw,
+  Plus,
+  Star,
+  CheckCircle2,
+  X,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import {
@@ -25,244 +28,549 @@ import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/components/store/authStore";
 import { useRouter } from "next/navigation";
-const BASE_URL = "https://sh-supplements.runasp.net";
+
+interface AddressData {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
 
 export default function SettingsPage() {
+  const [isClient, setIsClient] = useState(false);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const router = useRouter();
+
+  // Tabs State
+  const [activeTab, setActiveTab] = useState("security");
+
+  // Security State
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
-
-  const [formData, setFormData] = useState({
+  const [password, setPassword] = useState({
     currentPassword: "",
     newPassword: "",
   });
 
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
+  // Addresses State
+  const [addresses, setAddresses] = useState<AddressData[]>([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
+    isDefault: false,
+  });
 
   useEffect(() => {
     setIsClient(true);
-    if (!accessToken) {
-      router.replace("/login");
-    }
+    if (!accessToken) router.replace("/login");
   }, [accessToken, router]);
 
-  if (!accessToken || !isClient) return null;
+  // جلب العناوين عند تحميل الصفحة
+  useEffect(() => {
+    if (isClient && accessToken) {
+      fetchAddresses();
+    }
+  }, [isClient, accessToken]);
 
-  async function handleChangePassword(e: React.FormEvent<HTMLFormElement>) {
+  // --- API Functions ---
+
+  // 1. Fetch Addresses (GET)
+  const fetchAddresses = async () => {
+    try {
+      const response = await api.get("/User/addresses");
+      setAddresses(response.data);
+    } catch (error) {
+      toast.error("Failed to load addresses.");
+    }
+  };
+
+  // 2. Change Password
+  async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const response = await api.post(`${BASE_URL}/api/Auth/change-password`, {
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword,
-      });
-      toast.success(response.data?.Message || "Password changed successfully!");
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.Message || "Failed to change password.",
-      );
+      await api.post(`/Auth/change-password`, password);
+      toast.success("Password changed successfully!");
+      setPassword({ currentPassword: "", newPassword: "" });
+    } catch {
+      toast.error("Failed to change password.");
     }
   }
 
+  async function handleAddAddress(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await api.post("/User/address", newAddress);
+      toast.success("Address added successfully!");
+      setIsAddModalOpen(false);
+      setNewAddress({
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "",
+        isDefault: false,
+      });
+      fetchAddresses();
+    } catch (error) {
+      toast.error("Failed to add address.");
+    }
+  }
+
+  // 4. Set Default Address (PUT)
+  async function handleSetDefaultAddress(id: string) {
+    try {
+      await api.put(`/User/address/${id}/set-default`);
+      toast.success("Default address updated!");
+      fetchAddresses(); // تحديث القائمة لتعكس التغيير
+    } catch (error) {
+      toast.error("Failed to update default address.");
+    }
+  }
+
+  // 5. Log Out
   async function handleLogOut() {
     try {
       await api.post("/Auth/revoke-token");
+    } catch (error) {
+      console.error("Logout error", error);
+    } finally {
       useAuthStore.getState().logout();
-      toast.success("Logged out successfully.");
       router.replace("/");
-      router.refresh();
-    } catch (error: any) {
-      toast.error(error.response?.data?.Message || "Failed to log out");
     }
   }
 
+  if (!isClient || !accessToken) return null;
+  const egyptianGovernorates = [
+    "Cairo",
+    "Giza",
+    "Alexandria",
+    "Dakahlia",
+    "Red Sea",
+    "Beheira",
+    "Fayoum",
+    "Gharbia",
+    "Ismailia",
+    "Menofia",
+    "Minya",
+    "Qalyubia",
+    "New Valley",
+    "South Sinai",
+    "Port Said",
+    "Suez",
+    "Sharqia",
+    "Damietta",
+    "North Sinai",
+    "Beni Suef",
+    "Luxor",
+    "Aswan",
+    "Matrouh",
+    "Asyut",
+    "Sohag",
+    "Qena",
+  ];
   return (
-    <div className="space-y-8 max-w-4xl" dir="ltr">
-      {/* Header */}
+    <div className="space-y-8 max-w-5xl mx-auto p-4" dir="ltr">
       <div>
-        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
           <Settings className="h-6 w-6 text-[#0044CC]" /> App Settings
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Configure your security preferences, notification triggers, and active
-          system integrations.
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Side: Navigation Quick Tabs View */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar Navigation */}
         <div className="lg:col-span-1 space-y-3">
           <div className="bg-white border border-gray-100 rounded-xl p-2 shadow-sm space-y-1">
-            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-bold bg-[#0044CC]/5 text-[#0044CC] text-left">
-              <Shield className="h-4 w-4" /> Security & Password
+            <button
+              onClick={() => setActiveTab("security")}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-bold text-left transition-colors ${
+                activeTab === "security"
+                  ? "bg-[#0044CC]/5 text-[#0044CC]"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              <Shield className="h-4 w-4" /> Security
             </button>
-            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 text-left transition-colors">
-              <Bell className="h-4 w-4" /> Notifications
+            <button
+              onClick={() => setActiveTab("address")}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-bold text-left transition-colors ${
+                activeTab === "address"
+                  ? "bg-[#0044CC]/5 text-[#0044CC]"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              <MapPin className="h-4 w-4" /> Addresses
             </button>
-            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 text-left transition-colors">
-              <Key className="h-4 w-4" /> API Integrations (.NET)
-            </button>
+          </div>
+
+          <div className="pt-2">
+            <Button
+              onClick={handleLogOut}
+              variant="outline"
+              className="w-full text-red-600 border-red-100 hover:bg-red-50 hover:text-red-700"
+            >
+              <LogOut className="h-4 w-4 mr-2" /> Log Out
+            </Button>
           </div>
         </div>
 
-        {/* Right Side: Settings Actions Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* 1. Password & Security Form */}
-          <Card className="bg-white border-gray-100 shadow-sm rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-base font-bold">
-                Update Password
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Ensure your account is using a long, random password to stay
-                secure.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleChangePassword} className="space-y-4">
-                {/* Current Password */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="current-pass"
-                    className="text-xs font-semibold text-gray-700"
-                  >
-                    Current Password
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="current-pass"
-                      type={showCurrent ? "text" : "password"}
-                      placeholder="********"
-                      value={formData.currentPassword}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          currentPassword: e.target.value,
-                        })
-                      }
-                      className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC] pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrent(!showCurrent)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                    >
-                      {showCurrent ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
+        {/* Dynamic Content */}
+        <div className="lg:col-span-3">
+          {activeTab === "security" ? (
+            <Card className="bg-white border-gray-100 shadow-sm rounded-xl">
+              <CardHeader>
+                <CardTitle>Update Password</CardTitle>
+                <CardDescription>
+                  Ensure your account is using a long, random password to stay
+                  secure.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={handleChangePassword}
+                  className="space-y-4 max-w-md"
+                >
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold">
+                      Current Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        type={showCurrent ? "text" : "password"}
+                        value={password.currentPassword}
+                        onChange={(e) =>
+                          setPassword({
+                            ...password,
+                            currentPassword: e.target.value,
+                          })
+                        }
+                        className="pr-10 bg-gray-50 border-none"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrent(!showCurrent)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showCurrent ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                {/* New Password */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="new-pass"
-                    className="text-xs font-semibold text-gray-700"
-                  >
-                    New Password
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="new-pass"
-                      type={showNew ? "text" : "password"}
-                      placeholder="********"
-                      value={formData.newPassword}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          newPassword: e.target.value,
-                        })
-                      }
-                      className="bg-[#F4F4F5] border-none focus-visible:ring-1 focus-visible:ring-[#0044CC] pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNew(!showNew)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                    >
-                      {showNew ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        type={showNew ? "text" : "password"}
+                        value={password.newPassword}
+                        onChange={(e) =>
+                          setPassword({
+                            ...password,
+                            newPassword: e.target.value,
+                          })
+                        }
+                        className="pr-10 bg-gray-50 border-none"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNew(!showNew)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showNew ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                <div className="pt-2 flex justify-end">
                   <Button
                     type="submit"
-                    className="bg-[#0044CC] hover:bg-[#0033AA] text-white text-xs font-semibold px-5 h-9 rounded-md flex items-center gap-1.5 shadow-sm"
+                    className="w-full bg-[#0044CC] hover:bg-[#0033AA]"
                   >
-                    <RefreshCw className="h-3.5 w-3.5" /> Reset Password
+                    <RefreshCw className="h-4 w-4 mr-2" /> Reset Password
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {/* Addresses Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Saved Addresses
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Manage your delivery locations.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="bg-[#0044CC] hover:bg-[#0033AA] text-white font-bold shrink-0"
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Add New Address
+                </Button>
+              </div>
+
+              {/* Addresses Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {addresses.length === 0 ? (
+                  <div className="col-span-full py-12 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                    <MapPin className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 text-sm">
+                      No addresses saved yet.
+                    </p>
+                  </div>
+                ) : (
+                  addresses.map((addr) => (
+                    <Card
+                      key={addr.id}
+                      className={`relative overflow-hidden transition-all ${
+                        addr.isDefault
+                          ? "border-[#0044CC] bg-blue-50/30 shadow-md"
+                          : "border-gray-200 bg-white hover:border-gray-300 shadow-sm"
+                      }`}
+                    >
+                      {addr.isDefault && (
+                        <div className="absolute top-0 right-0 bg-[#0044CC] text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg flex items-center gap-1 uppercase tracking-wider">
+                          <CheckCircle2 className="h-3 w-3" /> Default
+                        </div>
+                      )}
+
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`p-2 rounded-lg ${addr.isDefault ? "bg-blue-100 text-[#0044CC]" : "bg-gray-100 text-gray-500"}`}
+                          >
+                            <MapPin className="h-5 w-5" />
+                          </div>
+                          <h3 className="font-bold text-gray-900 text-lg">
+                            {addr.city}
+                          </h3>
+                        </div>
+
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <p>
+                            <span className="font-semibold text-gray-900">
+                              State:
+                            </span>{" "}
+                            {addr.state}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-gray-900">
+                              Street:
+                            </span>{" "}
+                            {addr.street}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-gray-900">
+                              Country:
+                            </span>{" "}
+                            {addr.country}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-gray-900">
+                              Zip:
+                            </span>{" "}
+                            {addr.zipCode}
+                          </p>
+                        </div>
+
+                        {!addr.isDefault && (
+                          <div className="pt-4 border-t border-gray-100">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSetDefaultAddress(addr.id)}
+                              className="text-gray-500 hover:text-[#0044CC] hover:bg-blue-50 w-full font-semibold"
+                            >
+                              <Star className="h-4 w-4 mr-2" /> Set as Default
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Add New Address Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <Card className="w-full max-w-lg bg-white shadow-xl rounded-2xl border-none">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
+              <CardTitle className="text-xl font-bold">
+                Add New Address
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-gray-400 hover:text-red-500"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-6">
+              <form onSubmit={handleAddAddress} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-gray-700 uppercase">
+                      Country
+                    </Label>
+                    <select
+                      className="flex h-10 w-full rounded-md bg-gray-50 px-3 py-2 text-sm focus:outline-none border border-transparent focus:border-[#0044CC]"
+                      value={newAddress.country}
+                      onChange={(e) =>
+                        setNewAddress({
+                          ...newAddress,
+                          country: e.target.value,
+                        })
+                      }
+                      required
+                    >
+                      <option value="" disabled>
+                        Select Country
+                      </option>
+                      <option value="Egypt">Egypt</option>
+                      <option value="Saudi Arabia">Saudi Arabia</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-gray-700 uppercase">
+                      State/Province
+                    </Label>
+                    <select
+                      className="flex h-10 w-full rounded-md bg-gray-50 px-3 py-2 text-sm focus:outline-none border border-transparent focus:border-[#0044CC]"
+                      value={newAddress.state}
+                      onChange={(e) =>
+                        setNewAddress({ ...newAddress, state: e.target.value })
+                      }
+                      required
+                      disabled={!newAddress.country}
+                    >
+                      <option value="" disabled>
+                        Select State
+                      </option>
+                      {newAddress.country === "Egypt" ? (
+                        egyptianGovernorates.map((gov) => (
+                          <option key={gov} value={gov}>
+                            {gov}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="Other">Other</option>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-gray-700 uppercase">
+                      City
+                    </Label>
+                    <Input
+                      placeholder="e.g., 6th of October"
+                      className="bg-gray-50 border-none"
+                      value={newAddress.city}
+                      onChange={(e) =>
+                        setNewAddress({ ...newAddress, city: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-gray-700 uppercase">
+                      Zip Code
+                    </Label>
+                    <Input
+                      placeholder="e.g., 12566"
+                      className="bg-gray-50 border-none"
+                      value={newAddress.zipCode}
+                      onChange={(e) =>
+                        setNewAddress({
+                          ...newAddress,
+                          zipCode: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-gray-700 uppercase">
+                    Street Address
+                  </Label>
+                  <Input
+                    placeholder="e.g., 123 Main St, Apt 4"
+                    className="bg-gray-50 border-none"
+                    value={newAddress.street}
+                    onChange={(e) =>
+                      setNewAddress({ ...newAddress, street: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="isDefault"
+                    checked={newAddress.isDefault}
+                    onChange={(e) =>
+                      setNewAddress({
+                        ...newAddress,
+                        isDefault: e.target.checked,
+                      })
+                    }
+                    className="rounded border-gray-300 text-[#0044CC] focus:ring-[#0044CC]"
+                  />
+                  <Label
+                    htmlFor="isDefault"
+                    className="text-sm font-semibold cursor-pointer"
+                  >
+                    Set as default address
+                  </Label>
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setIsAddModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-[#0044CC] hover:bg-[#0033AA] text-white font-bold"
+                  >
+                    Save Address
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
-
-          {/* 2. Notifications Toggle Section (Static Clean UI representation) */}
-          <Card className="bg-white border-gray-100 shadow-sm rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-base font-bold">Preferences</CardTitle>
-              <CardDescription className="text-xs">
-                Manage system-wide alerts and synchronization triggers.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100/50">
-                <div>
-                  <h4 className="text-xs font-bold text-gray-900">
-                    Order Updates
-                  </h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    Receive immediate dashboard alerts for shipping state
-                    triggers.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  /*                   checked={notifyOrders} 
-                  onChange={() => setNotifyOrders(!notifyOrders)}*/
-                  className="h-4 w-4 rounded text-[#0044CC] focus:ring-[#0044CC] cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100/50">
-                <div>
-                  <h4 className="text-xs font-bold text-gray-900">
-                    Clearance Threshold Triggers
-                  </h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    Notify when products with active near-expiry hit maximal
-                    clearance discount drops.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  /*  checked={notifyClearance} 
-                  onChange={() => setNotifyClearance(!notifyClearance)} */
-                  className="h-4 w-4 rounded text-[#0044CC] focus:ring-[#0044CC] cursor-pointer"
-                />
-              </div>
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="button"
-                  className="bg-[#cc0000] hover:bg-[#0033AA] text-white text-xs font-semibold px-5 h-9 rounded-md flex items-center gap-1.5 shadow-sm"
-                  onClick={handleLogOut}
-                >
-                  <LogOut className="h-3.5 w-3.5" /> Log Out
-                </button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
-      </div>
+      )}
     </div>
   );
 }

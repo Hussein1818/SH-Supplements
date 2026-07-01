@@ -9,12 +9,17 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Features.Sales.Queries;
 
-public class GetCustomerOrdersQuery : IRequest<List<OrderDto>>
+public class CustomerOrdersResponseDto
+{
+    public List<OrderDto> Orders { get; set; } = new();
+}
+
+public class GetCustomerOrdersQuery : IRequest<CustomerOrdersResponseDto>
 {
     public string UserId { get; set; } = string.Empty;
 }
 
-public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQuery, List<OrderDto>>
+public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQuery, CustomerOrdersResponseDto>
 {
     private readonly IGenericRepository<Order> _orderRepository;
 
@@ -23,15 +28,15 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
         _orderRepository = orderRepository;
     }
 
-    public Task<List<OrderDto>> Handle(GetCustomerOrdersQuery request, CancellationToken cancellationToken)
+    public Task<CustomerOrdersResponseDto> Handle(GetCustomerOrdersQuery request, CancellationToken cancellationToken)
     {
         var orders = _orderRepository.GetQueryable()
             .Where(o => o.UserId == request.UserId)
-            .OrderByDescending(o => o.CreatedAt) 
+            .OrderByDescending(o => o.CreatedAt)
             .Select(o => new OrderDto
             {
                 Id = o.Id,
-                OrderDate = o.CreatedAt, 
+                OrderDate = o.CreatedAt,
                 Status = o.Status,
                 TotalAmount = o.TotalAmount,
                 DiscountAmount = o.DiscountAmount,
@@ -49,8 +54,8 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
                     UnitPrice = i.UnitPrice
                 }).ToList()
             })
-            .ToList(); 
+            .ToList();
 
-        return Task.FromResult(orders);
+        return Task.FromResult(new CustomerOrdersResponseDto { Orders = orders });
     }
 }

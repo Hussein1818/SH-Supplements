@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Dumbbell,
   Settings,
+  BadgeCheck,
 } from "lucide-react";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
@@ -28,6 +29,8 @@ import { cn } from "@/src/lib/utils";
 const NAV_ITEMS = [
   { name: "Home", href: "/", icon: Home },
   { name: "Categories", href: "/categories", icon: Grid },
+  { name: "BMI Tool", href: "/bmi", icon: Calculator },
+  { name: "Verify", href: "/verify", icon: BadgeCheck },
   { name: "Cart", href: "/cart", icon: ShoppingCart },
   { name: "Progress", href: "/progress", icon: TrendingUp },
   { name: "Orders", href: "/orders", icon: ShoppingBag },
@@ -45,7 +48,6 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
-
   // Read Zustand stores (called unconditionally to satisfy Rules of Hooks)
   const cartItems = useCartStore((state) => state.items);
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
