@@ -52,14 +52,13 @@ export default function CartPage() {
     setCart(cart.filter((item) => item.id !== cartItemId));
 
     try {
-      await api.delete(`/api/carts/remove/${cartItemId}`);
+      await api.delete(`/carts/remove/${cartItemId}`);
       toast.success("Item removed");
     } catch (error) {
       setCart(previousCart);
       toast.error("Failed to remove item");
     }
   };
-  // setCart(cart.map(item => item.id === cartItemId ? { ...item, quantity: newQuantity } : item));
   const handleUpdateQuantity = async (
     cartItemId: number,
     newQuantity: number,
@@ -74,7 +73,7 @@ export default function CartPage() {
     );
 
     try {
-      await api.put(`/api/Carts/update-quantity`, {
+      await api.put(`/Carts/update-quantity`, {
         cartItemId: cartItemId,
         quantity: newQuantity,
       });
