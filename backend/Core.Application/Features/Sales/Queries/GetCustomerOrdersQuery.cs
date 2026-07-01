@@ -2,21 +2,21 @@
 using Core.Application.Interfaces.Repositories;
 using Core.Domain.Entities.Sales;
 using MediatR;
-using System.Collections.Generic;
+using System;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Core.Application.Features.Sales.Queries;
 
-public class CustomerOrdersResponseDto
-{
-    public List<OrderDto> Orders { get; set; } = new();
-}
-
 public class GetCustomerOrdersQuery : IRequest<CustomerOrdersResponseDto>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
+
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
 }
 
 public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQuery, CustomerOrdersResponseDto>
@@ -30,9 +30,16 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
 
     public Task<CustomerOrdersResponseDto> Handle(GetCustomerOrdersQuery request, CancellationToken cancellationToken)
     {
-        var orders = _orderRepository.GetQueryable()
-            .Where(o => o.UserId == request.UserId)
+        var baseQuery = _orderRepository.GetQueryable()
+            .Where(o => o.UserId == request.UserId);
+
+        var totalCount = baseQuery.Count();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
+
+        var orders = baseQuery
             .OrderByDescending(o => o.CreatedAt)
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
             .Select(o => new OrderDto
             {
                 Id = o.Id,
@@ -56,6 +63,15 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
             })
             .ToList();
 
-        return Task.FromResult(new CustomerOrdersResponseDto { Orders = orders });
+        var response = new CustomerOrdersResponseDto
+        {
+            Orders = orders,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages
+        };
+
+        return Task.FromResult(response);
     }
 }

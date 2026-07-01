@@ -58,7 +58,8 @@ public class LoginQueryHandler : IRequestHandler<LoginQuery, AuthResponseDto>
         return new AuthResponseDto
         {
             Token = token,
-            RefreshToken = refreshToken
+            RefreshToken = refreshToken,
+            Roles = roles
         };
     }
 }

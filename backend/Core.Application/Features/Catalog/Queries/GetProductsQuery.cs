@@ -76,12 +76,12 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<Pr
                 Price = p.Price,
                 DiscountPrice = p.DiscountPrice,
                 Goal = p.Goal,
-
                 CategoryName = p.Category != null ? p.Category.Name : string.Empty,
                 BrandName = p.Brand != null ? p.Brand.Name : string.Empty,
                 AverageRating = p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0,
+                MainImageUrl = p.Images.Where(i => i.IsMainImage).Select(i => i.ImageUrl).FirstOrDefault() ?? string.Empty,
 
-                MainImageUrl = p.Images.Where(i => i.IsMainImage).Select(i => i.ImageUrl).FirstOrDefault() ?? string.Empty
+                InStock = p.StockQuantity > 0
             })
             .ToList();
 
