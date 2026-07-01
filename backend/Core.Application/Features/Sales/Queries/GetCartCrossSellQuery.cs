@@ -1,19 +1,21 @@
-﻿using Core.Application.Interfaces.Repositories;
+﻿using Core.Application.DTOs.Sales;
+using Core.Application.Interfaces.Repositories;
 using Core.Domain.Entities.Catalog;
 using Core.Domain.Entities.Sales;
 using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Core.Application.DTOs.Sales;
 
 namespace Core.Application.Features.Sales.Queries;
 
 
 public class GetCartCrossSellQuery : IRequest<List<CrossSellItemDto>>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
 }
 

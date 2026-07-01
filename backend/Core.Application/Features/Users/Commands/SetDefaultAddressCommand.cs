@@ -4,6 +4,7 @@ using Core.Domain.Entities.Users;
 using MediatR;
 using System;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +12,7 @@ namespace Core.Application.Features.Users.Commands;
 
 public class SetDefaultAddressCommand : IRequest<bool>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
     public Guid AddressId { get; set; }
 }
