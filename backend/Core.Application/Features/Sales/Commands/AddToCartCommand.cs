@@ -12,10 +12,10 @@ namespace Core.Application.Features.Sales.Commands;
 
 public class AddToCartCommand : IRequest<Guid>
 {
+    [JsonIgnore]
     public Guid ProductId { get; set; }
     public int Quantity { get; set; }
 
-    
     [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
 }
@@ -41,7 +41,6 @@ public class AddToCartCommandHandler : IRequestHandler<AddToCartCommand, Guid>
 
     public async Task<Guid> Handle(AddToCartCommand request, CancellationToken cancellationToken)
     {
-        // 1. Validate Product and Stock
         var product = await _productRepository.GetByIdAsync(request.ProductId);
         if (product == null)
             throw new NotFoundException(nameof(Product), request.ProductId);
@@ -49,47 +48,45 @@ public class AddToCartCommandHandler : IRequestHandler<AddToCartCommand, Guid>
         if (product.StockQuantity < request.Quantity)
             throw new ConflictException("Not enough stock available for this product.");
 
-        // 2. Get existing Cart for the user, or create a new one
+        decimal finalUnitPrice = product.DiscountPrice ?? product.Price;
+
         var cart = await _cartRepository.FirstOrDefaultAsync(c => c.UserId == request.UserId);
         if (cart == null)
         {
             cart = new Cart { UserId = request.UserId };
             await _cartRepository.AddAsync(cart);
 
-            // Save immediately to generate a CartId for the CartItems
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        // 3. Check if the product is already in the cart
         var existingCartItem = await _cartItemRepository.FirstOrDefaultAsync(ci => ci.CartId == cart.Id && ci.ProductId == request.ProductId);
 
         if (existingCartItem != null)
         {
-            // Product is already in cart, just increase the quantity
             var newQuantity = existingCartItem.Quantity + request.Quantity;
 
-            // Re-validate stock for the new total quantity
             if (product.StockQuantity < newQuantity)
                 throw new ConflictException("Not enough stock available for the requested total quantity.");
 
             existingCartItem.Quantity = newQuantity;
+            existingCartItem.UnitPrice = finalUnitPrice; 
+
             _cartItemRepository.Update(existingCartItem);
         }
         else
         {
-            // Add new item to the cart
             var newCartItem = new CartItem
             {
                 CartId = cart.Id,
                 ProductId = request.ProductId,
-                Quantity = request.Quantity
+                Quantity = request.Quantity,
+                UnitPrice = finalUnitPrice
             };
             await _cartItemRepository.AddAsync(newCartItem);
         }
 
-        // 4. Commit all changes
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return cart.Id; 
+        return cart.Id;
     }
 }

@@ -8,11 +8,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace Core.Application.Features.Catalog.Queries;
 
 public class GetPersonalizedProductsQuery : IRequest<List<PersonalizedProductDto>>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
 }
 

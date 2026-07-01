@@ -4,6 +4,7 @@ using Core.Domain.Entities.Users;
 using Core.Domain.Enums;
 using MediatR;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +12,7 @@ namespace Core.Application.Features.Users.Commands;
 
 public class UpdateUserProfileCommand : IRequest<bool>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;

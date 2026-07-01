@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,6 +14,7 @@ namespace Core.Application.Features.Auth.Commands;
 
 public class ConfirmEmailCommand : IRequest<bool>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
     public string Token { get; set; } = string.Empty;
 }

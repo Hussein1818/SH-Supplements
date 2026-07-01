@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -55,6 +56,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
 
 public class RevokeTokenCommand : IRequest<bool>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
 }
 

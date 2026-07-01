@@ -5,6 +5,7 @@ using Core.Domain.Entities.Sales;
 using MediatR;
 using Microsoft.Extensions.Options;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,6 +13,7 @@ namespace Core.Application.Features.Sales.Queries;
 
 public class GetActiveCartQuery : IRequest<CartDto>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
 }
 
