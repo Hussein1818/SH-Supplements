@@ -4,6 +4,7 @@ using Core.Domain.Entities.Financials;
 using MediatR;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +12,7 @@ namespace Core.Application.Features.Financials.Queries;
 
 public class GetWalletHistoryQuery : IRequest<List<WalletTransactionDto>>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
 }
 

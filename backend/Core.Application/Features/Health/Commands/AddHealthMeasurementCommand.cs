@@ -16,7 +16,8 @@ public class AddHealthMeasurementCommand : IRequest<Guid>
 {
     [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
-    public double Weight { get; set; }
+
+    public double? Weight { get; set; }
     public double? BodyFatPercentage { get; set; }
     public double? MuscleMassPercentage { get; set; }
 }
@@ -43,8 +44,18 @@ public class AddHealthMeasurementCommandHandler : IRequestHandler<AddHealthMeasu
         if (userProfile == null)
             throw new NotFoundException(nameof(UserProfile), request.UserId);
 
+        var userRecords = await _healthRepository.FindAsync(h => h.UserId == request.UserId);
+        var lastRecord = userRecords.OrderByDescending(h => h.CreatedAt).FirstOrDefault();
+
+        double finalWeight = request.Weight ?? lastRecord?.Weight ?? (double)userProfile.Weight;
+        double? finalBodyFat = request.BodyFatPercentage ?? lastRecord?.BodyFatPercentage;
+        double? finalMuscleMass = request.MuscleMassPercentage ?? lastRecord?.MuscleMassPercentage;
+
+        var gender = lastRecord?.Gender ?? Gender.Male;
+        var activityLevel = lastRecord?.ActivityLevel ?? ActivityLevel.LightlyActive;
+
         double heightInMeters = (double)userProfile.Height / 100.0;
-        double bmiValue = heightInMeters > 0 ? Math.Round(request.Weight / (heightInMeters * heightInMeters), 2) : 0;
+        double bmiValue = heightInMeters > 0 ? Math.Round(finalWeight / (heightInMeters * heightInMeters), 2) : 0;
 
         BmiCategory category = BmiCategory.NormalWeight;
         if (bmiValue > 0)
@@ -54,15 +65,9 @@ public class AddHealthMeasurementCommandHandler : IRequestHandler<AddHealthMeasu
             else if (bmiValue >= 30) category = BmiCategory.Obese;
         }
 
-        var userRecords = await _healthRepository.FindAsync(h => h.UserId == request.UserId);
-        var lastRecord = userRecords.OrderByDescending(h => h.CreatedAt).FirstOrDefault();
-
-        var gender = lastRecord?.Gender ?? Gender.Male;
-        var activityLevel = lastRecord?.ActivityLevel ?? ActivityLevel.LightlyActive;
-
         double bmrValue = gender == Gender.Male
-            ? (10 * request.Weight) + (6.25 * (double)userProfile.Height) - (5 * userProfile.Age) + 5
-            : (10 * request.Weight) + (6.25 * (double)userProfile.Height) - (5 * userProfile.Age) - 161;
+            ? (10 * finalWeight) + (6.25 * (double)userProfile.Height) - (5 * userProfile.Age) + 5
+            : (10 * finalWeight) + (6.25 * (double)userProfile.Height) - (5 * userProfile.Age) - 161;
 
         double tdeeMultiplier = activityLevel switch
         {
@@ -73,14 +78,13 @@ public class AddHealthMeasurementCommandHandler : IRequestHandler<AddHealthMeasu
             ActivityLevel.ExtraActive => 1.9,
             _ => 1.2
         };
-        double tdeeValue = bmrValue * tdeeMultiplier;
 
         var record = new HealthMetricRecord
         {
             UserId = request.UserId,
-            Weight = request.Weight,
-            BodyFatPercentage = request.BodyFatPercentage,
-            MuscleMassPercentage = request.MuscleMassPercentage,
+            Weight = finalWeight,
+            BodyFatPercentage = finalBodyFat,
+            MuscleMassPercentage = finalMuscleMass,
             Height = (double)userProfile.Height,
             Age = userProfile.Age,
             BmiValue = bmiValue,
@@ -88,10 +92,10 @@ public class AddHealthMeasurementCommandHandler : IRequestHandler<AddHealthMeasu
             Gender = gender,
             ActivityLevel = activityLevel,
             BmrValue = bmrValue,
-            TdeeValue = tdeeValue
+            TdeeValue = bmrValue * tdeeMultiplier
         };
 
-        userProfile.Weight = (decimal)request.Weight;
+        userProfile.Weight = (decimal)finalWeight;
         _userProfileRepository.Update(userProfile);
 
         await _healthRepository.AddAsync(record);

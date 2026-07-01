@@ -4,6 +4,7 @@ using Core.Application.Interfaces.Repositories;
 using Core.Domain.Entities.Sales;
 using Core.Domain.Entities.Users;
 using MediatR;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace Core.Application.Features.Sales.Queries;
 
 public class GetCoachDashboardQuery : IRequest<CoachDashboardDto>
 {
-
+    [JsonIgnore]
     public string CoachUserId { get; set; } = string.Empty;
 }
 

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/src/lib/utils";
-import Sidebar from "@/src/components/Sidebar";
 import Navbar from "@/src/components/Navbar";
 import AppInitializer from "@/src/components/auth/AppInitializer";
 import { Toaster } from "sonner";
@@ -37,7 +36,6 @@ export default function RootLayout({
           <Navbar />
           <div className="flex min-h-[calc(screen-80px)] w-full">
             <aside className="sticky top-[61px] h-[calc(100vh-61px)] hidden md:block z-40">
-              <Sidebar />
             </aside>
             <main className="flex-1 p-6 overflow-y-auto">{children}</main>
           </div>

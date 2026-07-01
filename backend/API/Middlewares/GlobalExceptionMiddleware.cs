@@ -1,7 +1,9 @@
 ﻿using Core.Application.Exceptions;
+using FluentValidation; 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -35,9 +37,9 @@ public class GlobalExceptionMiddleware
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
-
         var statusCode = (int)HttpStatusCode.InternalServerError;
         var message = "An unexpected error occurred.";
+        object? validationErrors = null;
 
         switch (exception)
         {
@@ -57,11 +59,19 @@ public class GlobalExceptionMiddleware
                 statusCode = (int)HttpStatusCode.Unauthorized;
                 message = unauthorizedAccessException.Message;
                 break;
+            case ValidationException validationException:
+                statusCode = (int)HttpStatusCode.BadRequest;
+                message = "Validation Failed.";
+                validationErrors = validationException.Errors.Select(e => new { Field = e.PropertyName, Error = e.ErrorMessage });
+                break;
         }
 
         context.Response.StatusCode = statusCode;
 
-        var result = JsonSerializer.Serialize(new { Message = message });
+        var result = validationErrors != null
+            ? JsonSerializer.Serialize(new { Message = message, Errors = validationErrors })
+            : JsonSerializer.Serialize(new { Message = message });
+
         return context.Response.WriteAsync(result);
     }
 }

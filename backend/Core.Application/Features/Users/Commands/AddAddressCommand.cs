@@ -3,6 +3,7 @@ using Core.Application.Interfaces.Repositories;
 using Core.Domain.Entities.Users;
 using MediatR;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace Core.Application.Features.Users.Commands;
 
 public class AddAddressCommand : IRequest<bool>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
     public string Street { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
