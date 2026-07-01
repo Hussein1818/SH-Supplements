@@ -63,8 +63,17 @@ public class AddBundleToCartCommandHandler : IRequestHandler<AddBundleToCartComm
         if (cart == null)
         {
             var userProfile = await _userProfileRepository.FirstOrDefaultAsync(u => u.UserId == request.UserId);
+
             if (userProfile == null)
-                throw new NotFoundException(nameof(UserProfile), request.UserId);
+            {
+                userProfile = new UserProfile
+                {
+                    UserId = request.UserId,
+                    FirstName = "New",
+                    LastName = "User"
+                };
+                await _userProfileRepository.AddAsync(userProfile);
+            }
 
             cart = new Cart
             {
