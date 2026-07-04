@@ -123,9 +123,23 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Gui
             if (appliedCoupon == null || !appliedCoupon.IsActive || appliedCoupon.ExpiryDate < DateTime.UtcNow || appliedCoupon.UsageCount >= appliedCoupon.UsageLimit)
                 throw new BadRequestException("Invalid, expired, or fully consumed coupon code.");
 
-            discountAmount = subTotal * (appliedCoupon.DiscountPercentage / 100m);
-            if (appliedCoupon.MaxDiscountAmount.HasValue && discountAmount > appliedCoupon.MaxDiscountAmount.Value)
-                discountAmount = appliedCoupon.MaxDiscountAmount.Value;
+            if (appliedCoupon.MinimumOrderAmount.HasValue && subTotal < appliedCoupon.MinimumOrderAmount.Value)
+                throw new BadRequestException($"Minimum order amount of {appliedCoupon.MinimumOrderAmount.Value} is required for this coupon.");
+
+            // Process dynamic discount types
+            if (appliedCoupon.DiscountType == DiscountType.Percentage)
+            {
+                discountAmount = subTotal * (appliedCoupon.DiscountPercentage / 100m);
+                if (appliedCoupon.MaxDiscountAmount.HasValue && discountAmount > appliedCoupon.MaxDiscountAmount.Value)
+                    discountAmount = appliedCoupon.MaxDiscountAmount.Value;
+            }
+            else if (appliedCoupon.DiscountType == DiscountType.FixedAmount)
+            {
+                discountAmount = appliedCoupon.DiscountAmount;
+            }
+
+            // Ensure discount does not exceed subtotal
+            if (discountAmount > subTotal) discountAmount = subTotal;
 
             appliedCoupon.UsageCount++;
             _couponRepository.Update(appliedCoupon);

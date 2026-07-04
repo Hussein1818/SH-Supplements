@@ -68,6 +68,7 @@ public class UpdateOrderStatusCommandHandler : IRequestHandler<UpdateOrderStatus
 
             if (order.PaymentStatus == PaymentStatus.Paid)
             {
+                // 1. Refund Buyer Final Amount
                 var userProfile = await _userProfileRepository.FirstOrDefaultAsync(u => u.UserId == order.UserId);
                 if (userProfile != null)
                 {
@@ -83,6 +84,32 @@ public class UpdateOrderStatusCommandHandler : IRequestHandler<UpdateOrderStatus
                         ReferenceOrderId = order.Id
                     });
                 }
+
+                // 2. Reverse Coach Commission if order was affiliated
+                var commissionTx = await _walletTxRepository.FirstOrDefaultAsync(wt =>
+                    wt.ReferenceOrderId == order.Id &&
+                    wt.Type == TransactionType.Deposit &&
+                    wt.UserId != order.UserId);
+
+                if (commissionTx != null)
+                {
+                    var coachProfile = await _userProfileRepository.FirstOrDefaultAsync(u => u.UserId == commissionTx.UserId);
+                    if (coachProfile != null)
+                    {
+                        coachProfile.WalletBalance -= commissionTx.Amount;
+                        _userProfileRepository.Update(coachProfile);
+
+                        await _walletTxRepository.AddAsync(new WalletTransaction
+                        {
+                            UserId = coachProfile.UserId,
+                            Amount = commissionTx.Amount,
+                            Type = TransactionType.Withdrawal,
+                            Description = $"Commission reversal for cancelled Order #{order.Id}",
+                            ReferenceOrderId = order.Id
+                        });
+                    }
+                }
+
                 order.PaymentStatus = PaymentStatus.Refunded;
             }
         }
