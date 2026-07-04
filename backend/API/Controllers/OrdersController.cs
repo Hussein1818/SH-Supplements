@@ -4,6 +4,7 @@ using Core.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize] 
+[Authorize]
 public class OrdersController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -28,7 +29,6 @@ public class OrdersController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized(new { Message = "User is not authorized." });
 
-        
         command.UserId = userId;
 
         var orderId = await _mediator.Send(command);
@@ -36,16 +36,29 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("my-orders")]
-    public async Task<IActionResult> GetMyOrders()
+    public async Task<IActionResult> GetMyOrders([FromQuery] GetCustomerOrdersQuery query)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
             return Unauthorized(new { Message = "User is not authorized." });
 
-        var query = new GetCustomerOrdersQuery { UserId = userId };
+        query.UserId = userId;
         var orders = await _mediator.Send(query);
 
         return Ok(orders);
+    }
+
+    [HttpPost("{id}/cancel")]
+    public async Task<IActionResult> CancelMyOrder(Guid id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { Message = "User is not authorized." });
+
+        var command = new CancelCustomerOrderCommand { OrderId = id, UserId = userId };
+        await _mediator.Send(command);
+
+        return Ok(new { Message = "Order cancelled successfully." });
     }
 
     [Authorize(Roles = Roles.Admin)]
@@ -55,6 +68,7 @@ public class OrdersController : ControllerBase
         await _mediator.Send(command);
         return Ok(new { Message = "Order status updated successfully." });
     }
+
     [HttpPost("returns/{id}/process")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ProcessReturnRequest(Guid id, [FromBody] bool isApproved)
