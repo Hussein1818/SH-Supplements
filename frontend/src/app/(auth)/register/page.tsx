@@ -53,7 +53,7 @@ export default function Register() {
         response.data?.Message ||
         "Account created successfully!, User registered successfully. Please check your email to confirm your account.";
       toast.success(successMessage);
-      router.push('/co')
+      router.push('/confirm-email');
     } catch (error: any) {
       const serverResponse = error.response?.data;
       console.error("Registration Error:", serverResponse);
@@ -215,7 +215,6 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* 2. اللوحة التفاعلية لعرض الشروط لليوزر بالـ Clean UI */}
               {formData.password && (
                 <div className="bg-gray-50 p-3 rounded-md space-y-1.5 text-xs text-gray-600 border border-gray-100">
                   <div
@@ -261,7 +260,6 @@ export default function Register() {
                 </div>
               )}
 
-              {/* 3. الزرار بيقفل (Disabled) لو الشروط متمتش */}
               <Button
                 type="submit"
                 disabled={!isPasswordValid}
