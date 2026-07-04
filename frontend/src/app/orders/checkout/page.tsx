@@ -30,6 +30,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -156,6 +157,29 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleApplyCoupon = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const code = form.getValues("couponCode");
+
+    if (!code) {
+      toast.error("Please enter a promo code first.");
+      return;
+    }
+
+    try {
+      setIsApplyingCoupon(true);
+      const response = await api.get(`/Coupons/validate/${code}`);
+      toast.success("Promo code applied successfully!");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.Message || "Invalid or expired promo code.",
+      );
+      form.setValue("couponCode", "");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
   return (
     <div
       className="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-12"
@@ -195,7 +219,9 @@ export default function CheckoutPage() {
                       }`}
                     >
                       <MapPin
-                        className={`w-5 h-5 mt-0.5 ${isSelected ? "text-[#0044CC]" : "text-gray-400"}`}
+                        className={`w-5 h-5 mt-0.5 ${
+                          isSelected ? "text-[#0044CC]" : "text-gray-400"
+                        }`}
                       />
                       <div className="flex-1">
                         <div className="flex justify-between items-center mb-1">
@@ -269,11 +295,25 @@ export default function CheckoutPage() {
                 (Optional)
               </span>
             </label>
-            <input
-              {...form.register("couponCode")}
-              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0044CC]/40 uppercase"
-              placeholder="e.g. SAVE20"
-            />
+            <div className="flex gap-2">
+              <input
+                {...form.register("couponCode")}
+                className="flex-1 p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0044CC]/40 uppercase"
+                placeholder="e.g. SAVE20"
+              />
+              <Button
+                type="button"
+                onClick={handleApplyCoupon}
+                disabled={isApplyingCoupon || !form.watch("couponCode")}
+                className="h-[50px] px-6 rounded-xl bg-gray-900 hover:bg-gray-800 text-white font-bold"
+              >
+                {isApplyingCoupon ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Apply"
+                )}
+              </Button>
+            </div>
             {form.formState.errors.couponCode && (
               <p className="text-red-500 text-sm">
                 {form.formState.errors.couponCode.message}

@@ -68,10 +68,10 @@ export default function SingleProductPage() {
 
     addItem({
       id: product.id,
-      name: product.name,
-      price: activePrice,
+      ProductName: product.name,
+      unitPrice: activePrice,
       quantity: 1,
-      imageUrl: mainImg,
+      productImageUrl: mainImg,
     });
 
     try {

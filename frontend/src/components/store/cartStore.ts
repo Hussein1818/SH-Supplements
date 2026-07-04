@@ -3,11 +3,10 @@ import { persist } from "zustand/middleware";
 
 interface CartItem {
   id: string;
-  productName: string;
+  ProductName: string;
   unitPrice: number;
   quantity: number;
   productImageUrl?: string;
-  totalPrice: number;
 }
 
 interface CartStore {
