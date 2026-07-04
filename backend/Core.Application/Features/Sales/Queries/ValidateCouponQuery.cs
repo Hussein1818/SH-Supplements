@@ -6,12 +6,14 @@ using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Core.Domain.Enums;
 
 namespace Core.Application.Features.Sales.Queries;
 
 public class ValidateCouponQuery : IRequest<CouponDto>
 {
     public string Code { get; set; } = string.Empty;
+    public decimal CartTotal { get; set; }
 }
 
 public class ValidateCouponQueryHandler : IRequestHandler<ValidateCouponQuery, CouponDto>
@@ -30,7 +32,6 @@ public class ValidateCouponQueryHandler : IRequestHandler<ValidateCouponQuery, C
         if (coupon == null)
             throw new NotFoundException(nameof(Coupon), request.Code);
 
-        // Security & Business Validation checks
         if (!coupon.IsActive)
             throw new BadRequestException("This coupon is no longer active.");
 
@@ -40,12 +41,16 @@ public class ValidateCouponQueryHandler : IRequestHandler<ValidateCouponQuery, C
         if (coupon.UsageCount >= coupon.UsageLimit)
             throw new BadRequestException("This coupon has reached its usage limit.");
 
+        if (coupon.MinimumOrderAmount.HasValue && request.CartTotal < coupon.MinimumOrderAmount.Value)
+            throw new BadRequestException($"This coupon requires a minimum order amount of {coupon.MinimumOrderAmount.Value}.");
+
         return new CouponDto
         {
-            Id = coupon.Id,
             Code = coupon.Code,
             DiscountPercentage = coupon.DiscountPercentage,
-            MaxDiscountAmount = coupon.MaxDiscountAmount
+            DiscountAmount = coupon.DiscountAmount, 
+            DiscountType = coupon.DiscountType?.ToString() ?? "Percentage",
+            MinimumOrderAmount = coupon.MinimumOrderAmount
         };
     }
 }

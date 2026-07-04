@@ -1,6 +1,7 @@
 ﻿using Core.Application.Exceptions;
 using Core.Application.Interfaces.Repositories;
 using Core.Domain.Entities.Sales;
+using Core.Domain.Enums;
 using MediatR;
 using System;
 using System.Threading;
@@ -12,7 +13,10 @@ public class CreateCouponCommand : IRequest<Guid>
 {
     public string Code { get; set; } = string.Empty;
     public decimal DiscountPercentage { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public DiscountType? DiscountType { get; set; }
     public decimal? MaxDiscountAmount { get; set; }
+    public decimal? MinimumOrderAmount { get; set; }
     public DateTime ExpiryDate { get; set; }
     public int UsageLimit { get; set; }
 }
@@ -30,16 +34,18 @@ public class CreateCouponCommandHandler : IRequestHandler<CreateCouponCommand, G
 
     public async Task<Guid> Handle(CreateCouponCommand request, CancellationToken cancellationToken)
     {
-        // Ensure coupon code is unique
         var existingCoupon = await _couponRepository.FirstOrDefaultAsync(c => c.Code.ToLower() == request.Code.ToLower());
         if (existingCoupon != null)
             throw new ConflictException("A coupon with this code already exists.");
 
         var coupon = new Coupon
         {
-            Code = request.Code.ToUpper(), 
+            Code = request.Code.ToUpper(),
             DiscountPercentage = request.DiscountPercentage,
+            DiscountAmount = request.DiscountAmount,
+            DiscountType = request.DiscountType,
             MaxDiscountAmount = request.MaxDiscountAmount,
+            MinimumOrderAmount = request.MinimumOrderAmount,
             ExpiryDate = request.ExpiryDate,
             UsageLimit = request.UsageLimit,
             IsActive = true,

@@ -59,7 +59,7 @@ public class ProductsController : ControllerBase
         return Ok(new { Message = "You will be notified when this product is back in stock." });
     }
     [HttpPost("ingredients")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> AddIngredientGlossary([FromBody] AddIngredientGlossaryCommand command)
     {
         var ingredientId = await _mediator.Send(command);
@@ -67,7 +67,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("{productId}/serial-numbers")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> AddProductSerialNumbers(Guid productId, [FromBody] List<string> serialNumbers)
     {
         var command = new AddProductSerialNumbersCommand
@@ -107,14 +107,10 @@ public class ProductsController : ControllerBase
         return Ok(result);
     }
     [HttpPost("{id}/alternatives")]
-    [Authorize(Roles = Roles.Admin)] 
-    public async Task<IActionResult> AddAlternative(Guid id, [FromBody] Guid alternativeProductId)
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> AddAlternative(Guid id, [FromBody] AddProductAlternativeCommand command)
     {
-        var command = new AddProductAlternativeCommand
-        {
-            ProductId = id,
-            AlternativeProductId = alternativeProductId
-        };
+        command.ProductId = id;
 
         var resultId = await _mediator.Send(command);
 
