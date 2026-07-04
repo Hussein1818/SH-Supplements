@@ -14,7 +14,6 @@ export default function CartPage() {
   const router = useRouter();
   const accessToken = useAuthStore((state) => state.accessToken);
 
-  // استدعاء البيانات من الـ Store
   const cartItems = useCartStore((state) => state.items);
   const updateQuantityStore = useCartStore((state) => state.updateQuantity);
   const removeItemStore = useCartStore((state) => state.removeItem);
@@ -22,13 +21,11 @@ export default function CartPage() {
   const [grandTotal, setGrandTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // دالة جلب البيانات من الباك إند
   const fetchCart = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await api.get(`/Carts/my-cart`);
 
-      // تحديث الـ Zustand Store مباشرة بالبيانات القادمة من السيرفر
       useCartStore.setState({ items: response.data.items || [] });
       setGrandTotal(response.data.grandTotal || 0);
     } catch (error) {
@@ -38,7 +35,6 @@ export default function CartPage() {
     }
   }, []);
 
-  // تنفيذ الجلب عند تحميل الصفحة
   useEffect(() => {
     if (!accessToken) {
       router.replace("/login");
@@ -50,9 +46,8 @@ export default function CartPage() {
   const handleRemoveItem = async (cartItemId: string) => {
     try {
       await api.delete(`/Carts/remove/${cartItemId}`);
-      removeItemStore(cartItemId); // تحديث الـ Store المحلي
+      removeItemStore(cartItemId);
       toast.success("Item removed");
-      // تحديث الإجمالي بعد الحذف
       fetchCart();
     } catch (error) {
       toast.error("Failed to remove item");
@@ -69,8 +64,8 @@ export default function CartPage() {
         cartItemId,
         quantity: newQuantity,
       });
-      updateQuantityStore(cartItemId, newQuantity); // تحديث الـ Store المحلي
-      fetchCart(); // تحديث الإجمالي
+      updateQuantityStore(cartItemId, newQuantity);
+      fetchCart();
     } catch (error) {
       toast.error("Failed to update quantity");
     }
@@ -89,7 +84,7 @@ export default function CartPage() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
         <ShoppingBag className="w-16 h-16 text-gray-200" />
         <h2 className="text-2xl font-bold">Your cart is empty</h2>
-        <Button onClick={() => router.push("/Products")}>
+        <Button onClick={() => router.push("/products")}>
           Browse Products
         </Button>
       </div>
