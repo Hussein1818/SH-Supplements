@@ -5,6 +5,7 @@ import { cn } from "@/src/lib/utils";
 import Navbar from "@/src/components/Navbar";
 import AppInitializer from "@/src/components/auth/AppInitializer";
 import { Toaster } from "sonner";
+import { Footer } from "../components/Footer";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -35,10 +36,10 @@ export default function RootLayout({
         <AppInitializer>
           <Navbar />
           <div className="flex min-h-[calc(screen-80px)] w-full">
-            <aside className="sticky top-[61px] h-[calc(100vh-61px)] hidden md:block z-40">
-            </aside>
+            <aside className="sticky top-[61px] h-[calc(100vh-61px)] hidden md:block z-40"></aside>
             <main className="flex-1 p-6 overflow-y-auto">{children}</main>
           </div>
+          <Footer />
         </AppInitializer>
       </body>
     </html>
