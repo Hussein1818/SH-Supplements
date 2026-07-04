@@ -2,19 +2,20 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface CartItem {
-  id: string | number;
-  name: string;
-  price: number;
+  id: string;
+  productName: string;
+  unitPrice: number;
   quantity: number;
-  imageUrl?: string;
+  productImageUrl?: string;
+  totalPrice: number;
 }
 
 interface CartStore {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (id: string | number) => void;
+  removeItem: (id: string) => void;
   clearCart: () => void;
-  updateQuantity: (id: string | number, quantity: number) => void;
+  updateQuantity: (id: string, quantity: number) => void;
 }
 
 export const useCartStore = create<CartStore>()(

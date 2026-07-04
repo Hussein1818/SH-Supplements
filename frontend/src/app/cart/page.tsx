@@ -109,7 +109,9 @@ export default function CartPage() {
               />
               <div>
                 <h3 className="font-bold">{item.productName}</h3>
-                <p className="text-sm text-gray-500">${item.unitPrice}</p>
+                <p className="text-sm text-gray-500">
+                  ${item.unitPrice.toFixed(2)}
+                </p>
               </div>
             </div>
 
