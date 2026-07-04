@@ -265,7 +265,6 @@ export default function VerifyPage() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-gray-50">
-                {/* Dummy Recent Items - يمكنك تفعيلها بلوجيك حفظ في LocalStorage لاحقاً */}
                 <div className="p-4 flex items-center justify-between hover:bg-gray-50 cursor-pointer transition-colors">
                   <div>
                     <p className="text-xs font-bold text-gray-900">A1B2-C3D4</p>

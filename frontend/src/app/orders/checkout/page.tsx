@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { api } from "@/src/components/auth/axiosInstance";
 import { OrderSummary } from "@/src/components/checkout/OrderSummary";
-import { Loader2, MapPin } from "lucide-react";
+import { Loader2, MapPin, Tag } from "lucide-react";
 import { useAuthStore } from "@/src/components/store/authStore";
 
 interface Address {
@@ -87,6 +87,7 @@ export default function CheckoutPage() {
       fetchCartSummary();
     }
   }, [setOrderSummary, router]);
+
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
@@ -116,6 +117,7 @@ export default function CheckoutPage() {
       setIsSubmitting(true);
       setShippingAddress(values.shippingAddress);
       setPaymentMethod(values.paymentMethod);
+
       const orderResponse = await api.post("/Orders/checkout", values);
 
       const orderId = orderResponse.data?.orderId;
@@ -153,7 +155,7 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div
       className="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-12"
@@ -163,6 +165,7 @@ export default function CheckoutPage() {
         <h1 className="text-3xl font-black text-gray-900">Checkout</h1>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          {/* Shipping Address */}
           <div className="space-y-4">
             <label className="font-bold text-lg text-gray-700">
               Shipping Address
@@ -226,6 +229,7 @@ export default function CheckoutPage() {
             )}
           </div>
 
+          {/* Payment Method */}
           <div className="space-y-4">
             <label className="font-bold text-lg text-gray-700">
               Select Payment Method
@@ -257,6 +261,27 @@ export default function CheckoutPage() {
             )}
           </div>
 
+          {/* Promo Code Section */}
+          <div className="space-y-4">
+            <label className="font-bold text-lg text-gray-700 flex items-center gap-2">
+              <Tag className="w-5 h-5" /> Promo Code
+              <span className="text-sm font-normal text-gray-400 ml-1">
+                (Optional)
+              </span>
+            </label>
+            <input
+              {...form.register("couponCode")}
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0044CC]/40 uppercase"
+              placeholder="e.g. SAVE20"
+            />
+            {form.formState.errors.couponCode && (
+              <p className="text-red-500 text-sm">
+                {form.formState.errors.couponCode.message}
+              </p>
+            )}
+          </div>
+
+          {/* Submit Button */}
           <Button
             type="submit"
             disabled={isSubmitting}

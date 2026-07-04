@@ -1,8 +1,7 @@
 import { create } from "zustand";
 
-// 1. ضفنا واجهة للمنتجات عشان تكون الـ Types سليمة
 export interface CheckoutItem {
-  id: string; // أو productId حسب الباك إند
+  id: string;
   name: string;
   imageUrl: string;
   quantity: number;
@@ -18,14 +17,12 @@ interface CheckoutData {
 }
 
 interface CheckoutStore {
-  // بيانات الفورم
   checkoutData: CheckoutData;
   setShippingAddress: (address: string) => void;
   setPaymentMethod: (method: number) => void;
   setCoupon: (code: string) => void;
   setPoints: (points: number) => void;
 
-  // بيانات ملخص الطلب (المنتجات والأسعار)
   items: CheckoutItem[];
   subtotal: number;
   shippingFee: number;
@@ -37,7 +34,6 @@ interface CheckoutStore {
     total: number,
   ) => void;
 
-  // تفريغ الستور
   resetCheckout: () => void;
 }
 
@@ -50,7 +46,6 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
     pointsToRedeem: 0,
   },
 
-  // القيم الافتراضية للملخص
   items: [],
   subtotal: 0,
   shippingFee: 0,
@@ -71,7 +66,6 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       checkoutData: { ...state.checkoutData, pointsToRedeem },
     })),
 
-  // دالة جديدة لحفظ السلة لما تجيبها من السيرفر
   setOrderSummary: (items, subtotal, shippingFee, total) =>
     set({ items, subtotal, shippingFee, total }),
 

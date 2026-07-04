@@ -38,20 +38,16 @@ export default function ProductsPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const addItem = useCartStore((state) => state.addItem);
 
-  // States للمنتجات والأقسام المختلفة
   const [products, setProducts] = useState<Product[]>([]);
   const [flashSales, setFlashSales] = useState<Product[]>([]);
   const [personalizedProducts, setPersonalizedProducts] = useState<Product[]>(
     [],
   );
 
-  // States الخاصة بالـ Pagination
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isMoreLoading, setIsMoreLoading] = useState(false);
-  const PAGE_SIZE = 8; // عدد المنتجات في كل صفحة
-
-  // States للبحث والفلترة
+  const PAGE_SIZE = 8; 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedBrand, setSelectedBrand] = useState("All");
@@ -65,7 +61,6 @@ export default function ProductsPage() {
     setIsClient(true);
   }, []);
 
-  // 1. جلب البيانات الأولية (الصفحة الأولى من المنتجات + العروض + المنتجات المخصصة)
   useEffect(() => {
     async function fetchInitialData() {
       try {
@@ -80,7 +75,6 @@ export default function ProductsPage() {
         setFlashSales(flashRes.data);
         setPersonalizedProducts(personalRes.data);
 
-        // لو المنتجات اللي رجعت أقل من حجم الصفحة، يبقى مفيش داتا تاني في الباك إند
         if (allRes.data.length < PAGE_SIZE) {
           setHasMore(false);
         }
@@ -96,7 +90,6 @@ export default function ProductsPage() {
     }
   }, [isClient, accessToken]);
 
-  // 2. دالة جلب المزيد من المنتجات عند الضغط على Load More
   const handleLoadMore = async () => {
     if (isMoreLoading || !hasMore) return;
 
@@ -112,7 +105,6 @@ export default function ProductsPage() {
         setHasMore(false);
         toast.info("You have reached the end of the catalog.");
       } else {
-        // دمج المنتجات الجديدة مع القديمة في الـ State
         setProducts((prev) => [...prev, ...response.data]);
         setPageNumber(nextPage);
 
@@ -127,7 +119,6 @@ export default function ProductsPage() {
     }
   };
 
-  // دالة إضافة المنتج للسلة
   const handleAddToCart = async (product: Product) => {
     const activePrice =
       product.discountPrice > 0 && product.discountPrice < product.price
@@ -153,7 +144,6 @@ export default function ProductsPage() {
     }
   };
 
-  // دالة طلب الإشعار عند توفر المنتج (Notify Restock)
   const handleNotifyRestock = async (productId: number) => {
     try {
       await api.post(`/Products/${productId}/notify-restock`);
@@ -166,7 +156,6 @@ export default function ProductsPage() {
     }
   };
 
-  // استخراج الكاتيجوريز والبراندز المتاحة ديناميكياً للفلترة
   const categories = [
     "All",
     ...Array.from(new Set(products.map((p) => p.categoryName))),
@@ -176,7 +165,6 @@ export default function ProductsPage() {
     ...Array.from(new Set(products.map((p) => p.brandName))),
   ];
 
-  // لوجيك الفلترة والبحث الفوري
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
       .toLowerCase()
@@ -204,7 +192,6 @@ export default function ProductsPage() {
     );
   }
 
-  // المكون المشترك لكارت المنتج (Product Card)
   const ProductCard = ({
     product,
     isRecommended = false,
@@ -457,7 +444,6 @@ export default function ProductsPage() {
               ))}
             </div>
 
-            {/* زرار جلب المزيد من المنتجات (Load More) بناءً على الـ Pagination */}
             {hasMore && (
               <div className="flex justify-center pt-8">
                 <Button

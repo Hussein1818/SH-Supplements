@@ -71,16 +71,12 @@ export default function SettingsPage() {
     if (!accessToken) router.replace("/login");
   }, [accessToken, router]);
 
-  // جلب العناوين عند تحميل الصفحة
   useEffect(() => {
     if (isClient && accessToken) {
       fetchAddresses();
     }
   }, [isClient, accessToken]);
 
-  // --- API Functions ---
-
-  // 1. Fetch Addresses (GET)
   const fetchAddresses = async () => {
     try {
       const response = await api.get("/User/addresses");
@@ -90,7 +86,6 @@ export default function SettingsPage() {
     }
   };
 
-  // 2. Change Password
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -122,12 +117,11 @@ export default function SettingsPage() {
     }
   }
 
-  // 4. Set Default Address (PUT)
   async function handleSetDefaultAddress(id: string) {
     try {
       await api.put(`/User/address/${id}/set-default`);
       toast.success("Default address updated!");
-      fetchAddresses(); // تحديث القائمة لتعكس التغيير
+      fetchAddresses(); 
     } catch (error) {
       toast.error("Failed to update default address.");
     }

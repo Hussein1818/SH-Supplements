@@ -31,7 +31,6 @@ import { Button } from "@/src/components/ui/button";
 import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 
-// تعريف أنواع البيانات لتطابق الـ JSON
 interface AddressData {
   id: string;
   street: string;
@@ -53,10 +52,9 @@ type UserData = {
   goal: number;
   medicalConditions: string | null;
   walletBalance: number;
-  addresses: AddressData[]; // ضفنا العناوين هنا
+  addresses: AddressData[];
 };
 
-// تحديد الحقول البسيطة اللي هتتعرض في الـ Loop
 type SimpleFieldKey =
   | "firstName"
   | "lastName"
@@ -79,7 +77,6 @@ export default function ProfilePage() {
       router.replace("/login");
       return;
     }
-    // جلب بيانات البروفايل
     api
       .get("/User/profile")
       .then((res) => {
@@ -273,7 +270,7 @@ export default function ProfilePage() {
                     className="w-full text-red-500 hover:text-red-600 hover:bg-red-50"
                     onClick={() => {
                       setIsEditing(false);
-                      setEditForm(userData); // إرجاع البيانات لوضعها الأصلي
+                      setEditForm(userData);
                     }}
                   >
                     <X className="h-4 w-4 mr-2" /> Cancel Editing
@@ -293,7 +290,7 @@ export default function ProfilePage() {
                 variant="outline"
                 size="sm"
                 className="text-xs font-bold"
-                onClick={() => router.push("/settings")} // توجيهه لصفحة الإعدادات لو عايز يعدل
+                onClick={() => router.push("/settings")} 
               >
                 Manage
               </Button>
