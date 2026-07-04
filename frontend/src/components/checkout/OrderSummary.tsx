@@ -21,7 +21,6 @@ export const OrderSummary = () => {
         Order Summary
       </h2>
 
-      {/* قائمة المنتجات بالصور */}
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
         {items.map((item) => (
           <div
@@ -46,7 +45,6 @@ export const OrderSummary = () => {
         ))}
       </div>
 
-      {/* تفاصيل الفاتورة */}
       <div className="space-y-3 pt-4 border-t border-gray-200">
         <div className="flex justify-between text-sm text-gray-600 font-medium">
           <span>Subtotal</span>

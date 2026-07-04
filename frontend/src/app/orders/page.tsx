@@ -314,7 +314,6 @@ const handleRetryPayment = async (orderId: string) => {
                           </Button>
                         )}
 
-                      {/* زر طلب الإرجاع (يظهر فقط لو الطلب تم تسليمه) */}
                       {order.status === 4 && (
                         <Button
                           size="sm"
@@ -332,7 +331,6 @@ const handleRetryPayment = async (orderId: string) => {
                         </Button>
                       )}
 
-                      {/* زر الإلغاء (يظهر فقط لو الطلب قيد الانتظار أو المعالجة) */}
                       {(order.status === 1 || order.status === 2) && (
                         <Button
                           size="sm"
