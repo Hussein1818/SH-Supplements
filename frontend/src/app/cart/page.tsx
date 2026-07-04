@@ -8,6 +8,7 @@ import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { useCartStore } from "@/src/components/store/cartStore";
 import { useAuthStore } from "@/src/components/store/authStore";
+import Link from "next/link";
 
 export default function CartPage() {
   const router = useRouter();
@@ -164,8 +165,8 @@ export default function CartPage() {
           <p className="text-sm text-gray-500">Grand Total</p>
           <p className="text-3xl font-black">${grandTotal.toFixed(2)}</p>
         </div>
-        <Button size="lg" className="rounded-xl px-8">
-          Proceed to Checkout
+        <Button asChild size="lg" className="rounded-xl px-8">
+          <Link href="/orders/checkout">Proceed to Checkout</Link>
         </Button>
       </div>
     </div>
