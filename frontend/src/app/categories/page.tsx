@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 const categoryIcons: any = {
-  Vitamins: <Pill className="w-8 h-8 text-blue-500" />,
+  Vitamins: <Pill className="w-8 h-8 text-emerald-500" />,
   Protein: <Zap className="w-8 h-8 text-orange-500" />,
   Fitness: <Dumbbell className="w-8 h-8 text-emerald-500" />,
   Burners: <Flame className="w-8 h-8 text-red-500" />,
@@ -54,7 +54,7 @@ export default function CategoriesPage() {
 
       {isLoading ? (
         <div className="flex justify-center h-64 items-center">
-          <Loader2 className="w-10 h-10 animate-spin text-[#0044CC]" />
+          <Loader2 className="w-10 h-10 animate-spin text-[#059669]" />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -74,7 +74,7 @@ export default function CategoriesPage() {
                     `Discover our premium collection of ${cat.name} supplements designed for your performance.`}
                 </p>
 
-                <div className="flex items-center text-[#0044CC] font-bold gap-2 group-hover:gap-4 transition-all">
+                <div className="flex items-center text-[#059669] font-bold gap-2 group-hover:gap-4 transition-all">
                   Browse Collection <span aria-hidden="true">→</span>
                 </div>
               </div>

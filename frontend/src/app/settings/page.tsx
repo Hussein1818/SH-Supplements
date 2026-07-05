@@ -175,7 +175,7 @@ export default function SettingsPage() {
     <div className="space-y-8 max-w-5xl mx-auto p-4" dir="ltr">
       <div>
         <h1 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
-          <Settings className="h-6 w-6 text-[#0044CC]" /> App Settings
+          <Settings className="h-6 w-6 text-emerald-600" /> App Settings
         </h1>
       </div>
 
@@ -187,7 +187,7 @@ export default function SettingsPage() {
               onClick={() => setActiveTab("security")}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-bold text-left transition-colors ${
                 activeTab === "security"
-                  ? "bg-[#0044CC]/5 text-[#0044CC]"
+                  ? "bg-emerald-600/5 text-emerald-700"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
@@ -197,7 +197,7 @@ export default function SettingsPage() {
               onClick={() => setActiveTab("address")}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-bold text-left transition-colors ${
                 activeTab === "address"
-                  ? "bg-[#0044CC]/5 text-[#0044CC]"
+                  ? "bg-emerald-600/5 text-emerald-700"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
@@ -292,7 +292,7 @@ export default function SettingsPage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-[#0044CC] hover:bg-[#0033AA]"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" /> Reset Password
                   </Button>
@@ -313,7 +313,7 @@ export default function SettingsPage() {
                 </div>
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="bg-[#0044CC] hover:bg-[#0033AA] text-white font-bold shrink-0"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shrink-0"
                 >
                   <Plus className="h-4 w-4 mr-2" /> Add New Address
                 </Button>
@@ -334,12 +334,12 @@ export default function SettingsPage() {
                       key={addr.id}
                       className={`relative overflow-hidden transition-all ${
                         addr.isDefault
-                          ? "border-[#0044CC] bg-blue-50/30 shadow-md"
+                          ? "border-emerald-500 bg-emerald-50/30 shadow-md"
                           : "border-gray-200 bg-white hover:border-gray-300 shadow-sm"
                       }`}
                     >
                       {addr.isDefault && (
-                        <div className="absolute top-0 right-0 bg-[#0044CC] text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg flex items-center gap-1 uppercase tracking-wider">
+                        <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg flex items-center gap-1 uppercase tracking-wider">
                           <CheckCircle2 className="h-3 w-3" /> Default
                         </div>
                       )}
@@ -347,7 +347,7 @@ export default function SettingsPage() {
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`p-2 rounded-lg ${addr.isDefault ? "bg-blue-100 text-[#0044CC]" : "bg-gray-100 text-gray-500"}`}
+                            className={`p-2 rounded-lg ${addr.isDefault ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}
                           >
                             <MapPin className="h-5 w-5" />
                           </div>
@@ -389,7 +389,7 @@ export default function SettingsPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleSetDefaultAddress(addr.id)}
-                              className="text-gray-500 hover:text-[#0044CC] hover:bg-blue-50 w-full font-semibold"
+                              className="text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 w-full font-semibold"
                             >
                               <Star className="h-4 w-4 mr-2" /> Set as Default
                             </Button>
@@ -430,7 +430,7 @@ export default function SettingsPage() {
                       Country
                     </Label>
                     <select
-                      className="flex h-10 w-full rounded-md bg-gray-50 px-3 py-2 text-sm focus:outline-none border border-transparent focus:border-[#0044CC]"
+                      className="flex h-10 w-full rounded-md bg-gray-50 px-3 py-2 text-sm focus:outline-none border border-transparent focus:border-emerald-500"
                       value={newAddress.country}
                       onChange={(e) =>
                         setNewAddress({
@@ -453,7 +453,7 @@ export default function SettingsPage() {
                       State/Province
                     </Label>
                     <select
-                      className="flex h-10 w-full rounded-md bg-gray-50 px-3 py-2 text-sm focus:outline-none border border-transparent focus:border-[#0044CC]"
+                      className="flex h-10 w-full rounded-md bg-gray-50 px-3 py-2 text-sm focus:outline-none border border-transparent focus:border-emerald-500"
                       value={newAddress.state}
                       onChange={(e) =>
                         setNewAddress({ ...newAddress, state: e.target.value })
@@ -537,7 +537,7 @@ export default function SettingsPage() {
                         isDefault: e.target.checked,
                       })
                     }
-                    className="rounded border-gray-300 text-[#0044CC] focus:ring-[#0044CC]"
+                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                   />
                   <Label
                     htmlFor="isDefault"
@@ -558,7 +558,7 @@ export default function SettingsPage() {
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 bg-[#0044CC] hover:bg-[#0033AA] text-white font-bold"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                   >
                     Save Address
                   </Button>

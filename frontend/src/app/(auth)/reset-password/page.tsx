@@ -75,7 +75,7 @@ export default function ResetPassword() {
                     id="email"
                     type="email"
                     placeholder="Email"
-                    className="pl-10 pr-3 focus-visible:ring-[#0044CC] text-left"
+                    className="pl-10 pr-3 focus-visible:ring-[#059669] text-left"
                     required
                     value={formData.email}
                     onChange={(e) => {
@@ -90,7 +90,7 @@ export default function ResetPassword() {
                   <Input
                     id="password"
                     placeholder="********"
-                    className="pl-10 pr-10 focus-visible:ring-[#0044CC]"
+                    className="pl-10 pr-10 focus-visible:ring-[#059669]"
                     required
                     value={formData.newPassword}
                     type={showPassword ? "text" : "password"}
@@ -114,7 +114,7 @@ export default function ResetPassword() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#0044CC] hover:bg-[#0033AA] text-white py-2 rounded-md transition-colors font-medium mt-2"
+                className="w-full bg-[#059669] hover:bg-[#047857] text-white py-2 rounded-md transition-colors font-medium mt-2"
               >
                 Reset Password ←
               </Button>

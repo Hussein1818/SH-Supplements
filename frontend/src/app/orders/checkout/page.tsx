@@ -197,7 +197,7 @@ export default function CheckoutPage() {
 
             {isLoadingAddresses ? (
               <div className="flex justify-center py-4">
-                <Loader2 className="animate-spin text-[#0044CC]" />
+                <Loader2 className="animate-spin text-emerald-600" />
               </div>
             ) : addresses.length > 0 ? (
               <div className="space-y-3">
@@ -214,13 +214,13 @@ export default function CheckoutPage() {
                       }
                       className={`p-4 border-2 rounded-2xl cursor-pointer transition-all flex items-start gap-3 ${
                         isSelected
-                          ? "border-[#0044CC] bg-blue-50"
+                          ? "border-emerald-500 bg-emerald-50"
                           : "border-gray-100 hover:border-gray-200"
                       }`}
                     >
                       <MapPin
                         className={`w-5 h-5 mt-0.5 ${
-                          isSelected ? "text-[#0044CC]" : "text-gray-400"
+                          isSelected ? "text-emerald-600" : "text-gray-400"
                         }`}
                       />
                       <div className="flex-1">
@@ -243,7 +243,7 @@ export default function CheckoutPage() {
             ) : (
               <input
                 {...form.register("shippingAddress")}
-                className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0044CC]/40"
+                className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
                 placeholder="Enter your full address manually"
               />
             )}
@@ -271,7 +271,7 @@ export default function CheckoutPage() {
                   onClick={() => form.setValue("paymentMethod", method.id)}
                   className={`p-4 border-2 rounded-2xl cursor-pointer transition-all ${
                     form.watch("paymentMethod") === method.id
-                      ? "border-[#0044CC] bg-blue-50"
+                      ? "border-emerald-500 bg-emerald-50"
                       : "border-gray-100 hover:border-gray-200"
                   }`}
                 >
@@ -298,7 +298,7 @@ export default function CheckoutPage() {
             <div className="flex gap-2">
               <input
                 {...form.register("couponCode")}
-                className="flex-1 p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0044CC]/40 uppercase"
+                className="flex-1 p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 uppercase"
                 placeholder="e.g. SAVE20"
               />
               <Button
@@ -325,7 +325,7 @@ export default function CheckoutPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl bg-[#0044CC] hover:bg-blue-700 font-bold text-lg"
+            className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold text-lg"
           >
             {isSubmitting ? (
               <>

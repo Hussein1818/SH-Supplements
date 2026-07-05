@@ -72,7 +72,7 @@ export default function ForgotPassword() {
                     id="usernameOrEmail"
                     type="text"
                     placeholder="Email"
-                    className="pl-10 pr-3 focus-visible:ring-[#0044CC] text-left"
+                    className="pl-10 pr-3 focus-visible:ring-[#059669] text-left"
                     required
                     value={formData.email}
                     onChange={(e) =>
@@ -84,7 +84,7 @@ export default function ForgotPassword() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#0044CC] hover:bg-[#0033AA] text-white py-2 rounded-md transition-colors font-medium mt-2"
+                className="w-full bg-[#059669] hover:bg-[#047857] text-white py-2 rounded-md transition-colors font-medium mt-2"
               >
                 Reset Password ←
               </Button>

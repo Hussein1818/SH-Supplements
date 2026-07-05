@@ -53,7 +53,7 @@ export default function ConfirmEmailPage() {
       <div className="bg-white p-8 rounded-md border border-gray-100 shadow-sm max-w-md w-full text-center space-y-6">
         {status === "loading" && (
           <div className="flex flex-col items-center space-y-3">
-            <Loader2 className="h-12 w-12 text-[#0044CC] animate-spin" />
+            <Loader2 className="h-12 w-12 text-[#059669] animate-spin" />
             <p className="text-gray-600 font-medium">{message}</p>
           </div>
         )}
@@ -65,7 +65,7 @@ export default function ConfirmEmailPage() {
             <p className="text-gray-600">{message}</p>
             <Button
               onClick={() => router.push("/login")}
-              className="w-full bg-[#0044CC] hover:bg-[#0033AA] mt-2"
+              className="w-full bg-[#059669] hover:bg-[#047857] mt-2"
             >
               Log in
             </Button>

@@ -116,9 +116,9 @@ export default function OrdersPage() {
       case 1:
         return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case 2:
-        return "bg-blue-50 text-blue-700 border-blue-200";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
       case 3:
-        return "bg-indigo-50 text-indigo-700 border-indigo-200";
+        return "bg-emerald-100 text-emerald-800 border-emerald-300";
       case 4:
         return "bg-green-50 text-green-700 border-green-200";
       case 5:
@@ -198,7 +198,7 @@ const handleRetryPayment = async (orderId: string) => {
       <div className="grid grid-cols-1 gap-6">
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#0044CC]" />
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
           </div>
         ) : orders.length === 0 ? (
           <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
@@ -291,7 +291,7 @@ const handleRetryPayment = async (orderId: string) => {
                         <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">
                           Order Total
                         </p>
-                        <p className="text-2xl font-black text-[#0044CC]">
+                        <p className="text-2xl font-black text-emerald-600">
                           ${order.finalAmount.toFixed(2)}
                         </p>
                         <p
@@ -307,7 +307,7 @@ const handleRetryPayment = async (orderId: string) => {
                           <Button
                             size="sm"
                             onClick={() => handleRetryPayment(order.id)}
-                            className="mt-4 w-full text-xs bg-[#0044CC] hover:bg-blue-700 text-white"
+                            className="mt-4 w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                           >
                             <CreditCard className="h-3 w-3 mr-1" />
                             Pay Now

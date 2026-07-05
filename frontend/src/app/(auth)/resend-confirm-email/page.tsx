@@ -80,7 +80,7 @@ export default function ResendConfirmationPage() {
                     id="email"
                     type="email"
                     placeholder="name@example.com"
-                    className="pl-10 pr-3 focus-visible:ring-[#0044CC] text-left"
+                    className="pl-10 pr-3 focus-visible:ring-[#059669] text-left"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -93,7 +93,7 @@ export default function ResendConfirmationPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#0044CC] hover:bg-[#0033AA] text-white py-2 rounded-md transition-colors font-medium mt-2 disabled:opacity-50"
+                className="w-full bg-[#059669] hover:bg-[#047857] text-white py-2 rounded-md transition-colors font-medium mt-2 disabled:opacity-50"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -110,7 +110,7 @@ export default function ResendConfirmationPage() {
             <div className="text-center text-sm pt-4 border-t border-gray-100">
               <Link
                 href="/login"
-                className="inline-flex items-center gap-1.5 text-[#0044CC] font-semibold hover:underline"
+                className="inline-flex items-center gap-1.5 text-[#059669] font-semibold hover:underline"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Sign In
