@@ -12,6 +12,7 @@ import { api } from "@/src/components/auth/axiosInstance";
 import { OrderSummary } from "@/src/components/checkout/OrderSummary";
 import { Loader2, MapPin, Tag } from "lucide-react";
 import { useAuthStore } from "@/src/components/store/authStore";
+import { useCartStore } from "@/src/components/store/cartStore";
 
 interface Address {
   id: string;
@@ -137,6 +138,7 @@ export default function CheckoutPage() {
         });
 
         if (paymentResponse.data?.paymentUrl) {
+          useCartStore.getState().clearCart();
           window.location.href = paymentResponse.data.paymentUrl;
           return;
         } else {
@@ -144,6 +146,7 @@ export default function CheckoutPage() {
           return;
         }
       }
+      useCartStore.getState().clearCart();
       toast.success("Order placed successfully!");
       resetCheckout();
       router.push("/orders");

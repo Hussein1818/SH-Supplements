@@ -20,20 +20,20 @@ import {
   Leaf,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
-import { useCartStore } from "./store/cartStore";
-import { useAuthStore } from "./store/authStore";
 import { cn } from "@/src/lib/utils";
+import { useCartStore } from "@/src/components/store/cartStore";
+import { useAuthStore } from "@/src/components/store/authStore";
 
 const NAV_ITEMS = [
   { name: "Home", href: "/", icon: Home },
   { name: "Categories", href: "/categories", icon: Grid },
   { name: "Products", href: "/products", icon: ShoppingBag },
   { name: "Verify", href: "/verify", icon: BadgeCheck },
-  { name: "Flash Deals", href: "/flash-sales", icon: Zap },
-  { name: "Profile", href: "/profile", icon: User },
-  { name: "Cart", href: "/cart", icon: ShoppingCart },
   { name: "BMI Tool", href: "/bmi", icon: Calculator },
+  { name: "Cart", href: "/cart", icon: ShoppingCart },
+  { name: "Flash Deals", href: "/flash-sales", icon: Zap },
   { name: "Settings", href: "/settings", icon: Settings },
+
 ] as const;
 
 const HIDDEN_ROUTES = ["/login", "/register", "/checkout"] as const;

@@ -1,6 +1,7 @@
 import { create } from "zustand";
+import { api } from "../auth/axiosInstance";
 
-interface CartItem {
+export interface CartItem {
   id?: string;
   productId: string;
   productName: string;
@@ -17,6 +18,7 @@ interface CartStore {
   clearCart: () => void;
   updateQuantity: (id: string, quantity: number) => void;
   setCart: (items: CartItem[]) => void;
+  fetchCart: () => Promise<void>;
 }
 
 export const useCartStore = create<CartStore>((set) => ({
@@ -25,18 +27,18 @@ export const useCartStore = create<CartStore>((set) => ({
   addItem: (newItem) =>
     set((state) => {
       const existingItem = state.items.find(
-        (item) => item.productId === newItem.productId,
+        (item) => String(item.productId) === String(newItem.productId),
       );
       if (existingItem) {
         return {
           items: state.items.map((item) =>
-            item.productId === newItem.productId
-              ? { ...item, quantity: item.quantity + 1 }
+            String(item.productId) === String(newItem.productId)
+              ? { ...item, quantity: item.quantity + (newItem.quantity || 1) }
               : item,
           ),
         };
       }
-      return { items: [...state.items, { ...newItem, quantity: 1 }] };
+      return { items: [...state.items, { ...newItem, quantity: newItem.quantity || 1 }] };
     }),
 
   removeItem: (id) =>
@@ -54,4 +56,13 @@ export const useCartStore = create<CartStore>((set) => ({
     })),
 
   setCart: (items) => set({ items }),
+
+  fetchCart: async () => {
+    try {
+      const response = await api.get("/Carts/my-cart");
+      set({ items: response.data?.items || [] });
+    } catch (error) {
+      console.error("Failed to fetch cart:", error);
+    }
+  },
 }));

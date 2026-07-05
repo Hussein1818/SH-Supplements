@@ -136,7 +136,8 @@ export default function ProductsPage() {
       quantity: 1, productImageUrl: product.mainImageUrl,
     });
     try {
-      await api.post("/carts/add", { productId: product.id, quantity: 1 });
+      await api.post("/Carts/add", { productId: product.id, quantity: 1 });
+      await useCartStore.getState().fetchCart();
       toast.success(`${product.name} added to cart`);
     } catch {
       toast.error("Failed to sync cart with server");

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Zap, Timer, AlertCircle, ShoppingCart, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
+import { useCartStore } from "@/src/components/store/cartStore";
 
 interface FlashSaleProduct {
   id: string;
@@ -46,8 +47,25 @@ export default function FlashSalesPage() {
     return new Date(dateString).toLocaleDateString("en-US", options);
   };
 
-  const handleAddToCart = (product: FlashSaleProduct) => {
-    toast.success(`${product.name} added to cart!`);
+  const addItem = useCartStore((state) => state.addItem);
+
+  const handleAddToCart = async (product: FlashSaleProduct) => {
+    if (product.stockQuantity <= 0) return;
+    const activePrice = product.discountPrice > 0 ? product.discountPrice : product.originalPrice;
+    addItem({
+      productId: String(product.id),
+      productName: product.name,
+      unitPrice: activePrice,
+      quantity: 1,
+      productImageUrl: product.imageUrl || "",
+    });
+    try {
+      await api.post("/Carts/add", { productId: product.id, quantity: 1 });
+      await useCartStore.getState().fetchCart();
+      toast.success(`${product.name} added to cart!`);
+    } catch {
+      toast.error("Failed to sync cart with server");
+    }
   };
 
   return (
