@@ -10,9 +10,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { api } from "@/src/components/auth/axiosInstance";
 import { OrderSummary } from "@/src/components/checkout/OrderSummary";
-import { Loader2, MapPin, Tag } from "lucide-react";
+import { Loader2, MapPin, Tag, CheckCircle2, Plus, AlertCircle } from "lucide-react";
 import { useAuthStore } from "@/src/components/store/authStore";
 import { useCartStore } from "@/src/components/store/cartStore";
+import { normalizeImageUrl } from "@/src/lib/utils";
 
 interface Address {
   id: string;
@@ -48,8 +49,16 @@ export default function CheckoutPage() {
     defaultValues: checkoutData,
   });
 
-  const formatAddress = (addr: Address) =>
-    `${addr.street}, ${addr.city}, ${addr.state}, ${addr.zipCode}, ${addr.country}`;
+  const formatAddress = (addr: Address) => {
+    const parts = [
+      addr.street,
+      addr.city,
+      addr.state,
+      addr.zipCode,
+      addr.country,
+    ].filter((p) => p && typeof p === "string" && p.trim() !== "");
+    return parts.join(", ");
+  };
 
   const { setOrderSummary } = useCheckoutStore();
 
@@ -66,11 +75,16 @@ export default function CheckoutPage() {
         }
 
         const formattedItems = cart.items.map((item: any) => ({
-          id: item.productId,
-          name: item.productName,
-          imageUrl: item.productImageUrl,
-          quantity: item.quantity,
-          price: item.unitPrice,
+          productId: item.productId || item.id || "",
+          productName: item.productName || item.name || "Product",
+          productImageUrl: normalizeImageUrl(item.productImageUrl || item.imageUrl || ""),
+          quantity: item.quantity || 1,
+          unitPrice:
+            item.unitPrice !== undefined ? item.unitPrice : item.price || 0,
+          totalPrice:
+            item.totalPrice !== undefined
+              ? item.totalPrice
+              : (item.unitPrice || item.price || 0) * (item.quantity || 1),
         }));
 
         const subtotal = cart.grandTotal;
@@ -94,15 +108,28 @@ export default function CheckoutPage() {
     const fetchAddresses = async () => {
       try {
         const response = await api.get("/User/addresses");
-        const fetchedAddresses: Address[] = response.data || [];
-        const sortedAddresses = fetchedAddresses.sort((a, b) =>
+        const fetchedAddresses: Address[] = Array.isArray(response.data)
+          ? response.data
+          : response.data?.addresses || [];
+        const sortedAddresses = [...fetchedAddresses].sort((a, b) =>
           a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1,
         );
 
         setAddresses(sortedAddresses);
-        const defaultAddress = sortedAddresses.find((a) => a.isDefault);
-        if (defaultAddress && !form.getValues("shippingAddress")) {
-          form.setValue("shippingAddress", formatAddress(defaultAddress));
+
+        const currentShipping = form.getValues("shippingAddress");
+        const defaultAddress =
+          sortedAddresses.find((a) => a.isDefault) || sortedAddresses[0];
+        if (
+          defaultAddress &&
+          (!currentShipping ||
+            !sortedAddresses.some((a) => formatAddress(a) === currentShipping))
+        ) {
+          const defaultStr = formatAddress(defaultAddress);
+          form.setValue("shippingAddress", defaultStr, {
+            shouldValidate: true,
+          });
+          setShippingAddress(defaultStr);
         }
       } catch (error) {
         toast.error("Failed to load addresses.");
@@ -111,8 +138,10 @@ export default function CheckoutPage() {
       }
     };
 
-    fetchAddresses();
-  }, [form]);
+    if (accessToken) {
+      fetchAddresses();
+    }
+  }, [form, accessToken, setShippingAddress]);
 
   const onSubmit = async (values: CheckoutFormValues) => {
     try {
@@ -194,13 +223,24 @@ export default function CheckoutPage() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Shipping Address */}
           <div className="space-y-4">
-            <label className="font-bold text-lg text-gray-700">
-              Shipping Address
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-lg text-gray-800">
+                Shipping Address
+              </label>
+              {addresses.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => router.push("/settings")}
+                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add / Manage Addresses
+                </button>
+              )}
+            </div>
 
             {isLoadingAddresses ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="animate-spin text-emerald-600" />
+              <div className="flex justify-center py-8 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <Loader2 className="animate-spin text-emerald-600 w-6 h-6" />
               </div>
             ) : addresses.length > 0 ? (
               <div className="space-y-3">
@@ -212,47 +252,108 @@ export default function CheckoutPage() {
                   return (
                     <div
                       key={addr.id}
-                      onClick={() =>
-                        form.setValue("shippingAddress", addrString)
-                      }
-                      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all flex items-start gap-3 ${
+                      onClick={() => {
+                        form.setValue("shippingAddress", addrString, {
+                          shouldValidate: true,
+                        });
+                        setShippingAddress(addrString);
+                      }}
+                      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all flex items-start gap-3.5 ${
                         isSelected
-                          ? "border-emerald-500 bg-emerald-50"
-                          : "border-gray-100 hover:border-gray-200"
+                          ? "border-emerald-600 bg-emerald-50/60 shadow-sm"
+                          : "border-gray-200 bg-white hover:border-gray-300"
                       }`}
                     >
-                      <MapPin
-                        className={`w-5 h-5 mt-0.5 ${
-                          isSelected ? "text-emerald-600" : "text-gray-400"
+                      <div
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center mt-0.5 shrink-0 ${
+                          isSelected
+                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            : "border-gray-300 bg-white"
                         }`}
-                      />
-                      <div className="flex-1">
-                        <div className="flex justify-between items-center mb-1">
-                          <p className="font-bold text-sm text-gray-900">
-                            {addr.city}
+                      >
+                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1 gap-2">
+                          <p className="font-bold text-sm text-gray-900 truncate">
+                            {addr.city || "Saved Address"}
                           </p>
                           {addr.isDefault && (
-                            <span className="text-[10px] font-bold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full uppercase">
+                            <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">
                               Default
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600">{addrString}</p>
+                        <p className="text-sm text-gray-600 leading-relaxed break-words">
+                          {addrString}
+                        </p>
                       </div>
                     </div>
                   );
                 })}
+
+                {/* Custom address override */}
+                <div className="pt-2">
+                  <p className="text-xs font-bold text-gray-600 mb-1.5">
+                    Or deliver to a custom address for this order:
+                  </p>
+                  <input
+                    {...form.register("shippingAddress")}
+                    onChange={(e) => {
+                      form.setValue("shippingAddress", e.target.value, {
+                        shouldValidate: true,
+                      });
+                      setShippingAddress(e.target.value);
+                    }}
+                    className="w-full p-3.5 border border-gray-200 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                    placeholder="Enter full custom delivery address..."
+                  />
+                </div>
               </div>
             ) : (
-              <input
-                {...form.register("shippingAddress")}
-                className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-                placeholder="Enter your full address manually"
-              />
+              <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center space-y-4 shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                  <MapPin className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-bold text-gray-900 text-base">
+                    No Saved Addresses Found
+                  </h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                    You don&apos;t have any delivery addresses saved yet. You can save one in your settings or enter it manually below.
+                  </p>
+                </div>
+                <div className="pt-1 flex justify-center">
+                  <Button
+                    type="button"
+                    onClick={() => router.push("/settings")}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Address in Settings
+                  </Button>
+                </div>
+                <div className="pt-4 border-t border-gray-100 text-left space-y-2">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
+                    Or enter address manually for this order:
+                  </label>
+                  <input
+                    {...form.register("shippingAddress")}
+                    onChange={(e) => {
+                      form.setValue("shippingAddress", e.target.value, {
+                        shouldValidate: true,
+                      });
+                      setShippingAddress(e.target.value);
+                    }}
+                    className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-colors"
+                    placeholder="Enter full delivery address (Street, City, State, Country, Zip)"
+                  />
+                </div>
+              </div>
             )}
 
             {form.formState.errors.shippingAddress && (
-              <p className="text-red-500 text-sm">
+              <p className="text-red-500 text-sm font-semibold flex items-center gap-1.5 mt-1">
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 {form.formState.errors.shippingAddress.message}
               </p>
             )}

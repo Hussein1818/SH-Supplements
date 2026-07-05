@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/src/components/auth/axiosInstance";
+import { getCategoryImageUrl } from "@/src/lib/utils";
 import {
   Loader2,
   Zap,
@@ -15,9 +17,11 @@ import {
 
 const categoryIcons: any = {
   Vitamins: <Pill className="w-8 h-8 text-emerald-500" />,
+  "Vitamins Minerals": <Pill className="w-8 h-8 text-emerald-500" />,
   Protein: <Zap className="w-8 h-8 text-orange-500" />,
   Fitness: <Dumbbell className="w-8 h-8 text-emerald-500" />,
   Burners: <Flame className="w-8 h-8 text-red-500" />,
+  "Fat Loss": <Flame className="w-8 h-8 text-red-500" />,
   Health: <HeartPulse className="w-8 h-8 text-pink-500" />,
   Default: <BotMessageSquare className="w-8 h-8 text-indigo-500" />,
 };
@@ -57,29 +61,48 @@ export default function CategoriesPage() {
           <Loader2 className="w-10 h-10 animate-spin text-[#059669]" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {categories.map((cat) => (
-            <Link href={`/categories/${cat.id}`} key={cat.id}>
-              <div className="group relative bg-white border border-gray-100 p-8 rounded-3xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="mb-6 p-4 bg-gray-50 rounded-2xl w-fit group-hover:scale-110 transition-transform">
-                  {categoryIcons[cat.name] || categoryIcons["Default"]}
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {categories.map((cat, index) => {
+            const imageUrl = getCategoryImageUrl(cat.name, index);
+            return (
+              <Link href={`/categories/${cat.id}`} key={cat.id} className="block group">
+                <div className="relative bg-stone-900 border border-stone-800 rounded-3xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 cursor-pointer overflow-hidden flex flex-col justify-end min-h-[300px] p-8">
+                  {/* Background Image with slight zoom on hover */}
+                  <div className="absolute inset-0 z-0 overflow-hidden bg-stone-900">
+                    <Image
+                      src={imageUrl}
+                      alt={cat.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
+                    />
+                    {/* Soft dark gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent transition-opacity duration-500 group-hover:opacity-90" />
+                  </div>
 
-                <h2 className="text-2xl font-black text-gray-900 mb-2">
-                  {cat.name}
-                </h2>
-                <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                  {cat.description ||
-                    `Discover our premium collection of ${cat.name} supplements designed for your performance.`}
-                </p>
+                  {/* Top Badge Icon */}
+                  <div className="absolute top-6 left-6 z-10 p-3 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 group-hover:bg-emerald-600 group-hover:border-emerald-500 transition-all duration-300 shadow-sm">
+                    {categoryIcons[cat.name] || categoryIcons["Default"]}
+                  </div>
 
-                <div className="flex items-center text-[#059669] font-bold gap-2 group-hover:gap-4 transition-all">
-                  Browse Collection <span aria-hidden="true">→</span>
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <h2 className="text-2xl font-black text-white mb-2 tracking-tight group-hover:text-emerald-300 transition-colors duration-300">
+                      {cat.name}
+                    </h2>
+                    <p className="text-stone-200/90 text-sm mb-6 leading-relaxed line-clamp-2">
+                      {cat.description ||
+                        `Discover our premium collection of ${cat.name} supplements designed for your performance.`}
+                    </p>
+
+                    <div className="flex items-center text-emerald-400 font-bold gap-2 group-hover:gap-3 transition-all duration-300 group-hover:text-emerald-300">
+                      Browse Collection <span aria-hidden="true">→</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

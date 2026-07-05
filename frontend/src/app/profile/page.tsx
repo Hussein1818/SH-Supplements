@@ -14,7 +14,7 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
-import { cn } from "@/src/lib/utils";
+import { cn, formatPrice } from "@/src/lib/utils";
 
 // ─── Types (unchanged) ─────────────────────────────────────────────────────
 interface AddressData {
@@ -183,8 +183,8 @@ export default function ProfilePage() {
                       <Wallet className="h-4 w-4 text-orange-500" aria-hidden="true" />
                       <span className="text-xs font-semibold text-stone-500">Wallet Balance</span>
                     </div>
-                    <span className="font-black text-orange-500 text-sm" aria-label={`Wallet balance: ${userData.walletBalance.toFixed(2)} Egyptian Pounds`}>
-                      {userData.walletBalance.toFixed(2)} EGP
+                    <span className="font-black text-orange-500 text-sm" aria-label={`Wallet balance: ${formatPrice(userData.walletBalance)}`}>
+                      {formatPrice(userData.walletBalance)}
                     </span>
                   </div>
                 </div>

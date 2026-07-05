@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Leaf, ArrowUpRight, Share2, MessageCircle, Play } from "lucide-react";
 
@@ -46,8 +47,14 @@ export const Footer = () => {
           {/* Brand column — takes 2 cols on lg */}
           <div className="lg:col-span-2 space-y-5">
             <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label="SH Supplements home">
-              <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
-                <Leaf className="h-4 w-4 text-white" aria-hidden="true" />
+              <div className="relative flex items-center justify-center">
+                <Image
+                  src="/logo.png"
+                  alt="SH Supplements Logo"
+                  width={36}
+                  height={36}
+                  className="h-8 md:h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                />
               </div>
               <div className="flex flex-col leading-none">
                 <span className="font-bold text-white text-sm tracking-tight">

@@ -16,6 +16,7 @@ import { useAuthStore } from "@/src/components/store/authStore";
 import { useRouter } from "next/navigation";
 import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
+import { formatPrice, normalizeImageUrl } from "@/src/lib/utils";
 
 interface OrderItem {
   productId: string;
@@ -260,7 +261,7 @@ const handleRetryPayment = async (orderId: string) => {
                       {order.items?.map((item, idx) => (
                         <div key={idx} className="flex items-center gap-3">
                           <img
-                            src={item.productImageUrl}
+                            src={normalizeImageUrl(item.productImageUrl)}
                             alt={item.productName}
                             className="w-10 h-10 object-cover rounded-md border"
                           />
@@ -269,8 +270,7 @@ const handleRetryPayment = async (orderId: string) => {
                               {item.productName}
                             </p>
                             <p className="text-xs text-gray-500">
-                              Qty: {item.quantity} | $
-                              {item.unitPrice.toFixed(2)}
+                              Qty: {item.quantity} | {formatPrice(item.unitPrice)}
                             </p>
                           </div>
                         </div>
@@ -292,7 +292,7 @@ const handleRetryPayment = async (orderId: string) => {
                           Order Total
                         </p>
                         <p className="text-2xl font-black text-emerald-600">
-                          ${order.finalAmount.toFixed(2)}
+                          {formatPrice(order.finalAmount)}
                         </p>
                         <p
                           className={`text-xs font-bold mt-1 ${paymentStatusDisplay.color}`}

@@ -21,7 +21,7 @@ import Link from "next/link";
 import { useCartStore } from "@/src/components/store/cartStore";
 import { toast } from "sonner";
 import { ProductCard } from "@/src/components/products/ProductCard";
-import { cn } from "@/src/lib/utils";
+import { cn, formatPrice, normalizeImageUrl } from "@/src/lib/utils";
 
 // ─── Interfaces (unchanged) ────────────────────────────────────────────────
 interface ProductImage {
@@ -192,7 +192,7 @@ export default function SingleProductPage() {
               )}
               {displayImage ? (
                 <img
-                  src={displayImage}
+                  src={normalizeImageUrl(displayImage)}
                   alt={product.name}
                   className="max-w-full max-h-full object-contain p-8 mix-blend-multiply"
                 />
@@ -221,7 +221,7 @@ export default function SingleProductPage() {
                         : "border-stone-200 hover:border-stone-300"
                     )}
                   >
-                    <img src={img.imageUrl} alt="" className="h-full w-full object-contain p-1 mix-blend-multiply" aria-hidden="true" />
+                    <img src={normalizeImageUrl(img.imageUrl)} alt="" className="h-full w-full object-contain p-1 mix-blend-multiply" aria-hidden="true" />
                   </button>
                 ))}
               </div>
@@ -253,10 +253,10 @@ export default function SingleProductPage() {
                 {hasDiscount ? (
                   <>
                     <span className="text-4xl font-black text-stone-900">
-                      ${product.discountPrice!.toFixed(2)}
+                      {formatPrice(product.discountPrice)}
                     </span>
                     <span className="text-xl text-stone-400 line-through font-medium mb-1">
-                      ${product.price.toFixed(2)}
+                      {formatPrice(product.price)}
                     </span>
                     <Badge variant="orange-solid" className="font-bold mb-1">
                       Save {discountPct}%
@@ -264,7 +264,7 @@ export default function SingleProductPage() {
                   </>
                 ) : (
                   <span className="text-4xl font-black text-stone-900">
-                    ${product.price.toFixed(2)}
+                    {formatPrice(product.price)}
                   </span>
                 )}
               </div>

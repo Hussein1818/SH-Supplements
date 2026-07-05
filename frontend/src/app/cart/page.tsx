@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useCartStore } from "@/src/components/store/cartStore";
 import { useAuthStore } from "@/src/components/store/authStore";
 import Link from "next/link";
-import { cn } from "@/src/lib/utils";
+import { cn, formatPrice, normalizeImageUrl } from "@/src/lib/utils";
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────
 function SkeletonCartItem() {
@@ -141,7 +141,7 @@ export default function CartPage() {
                 <Link href={`/products/${item.productId}`} className="flex-shrink-0" aria-label={`View ${item.productName}`}>
                   <div className="h-16 w-16 rounded-xl bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center">
                     <img
-                      src={item.productImageUrl || "/placeholder.png"}
+                      src={normalizeImageUrl(item.productImageUrl) || "/placeholder.png"}
                       alt={item.productName}
                       className="h-full w-full object-contain p-1 mix-blend-multiply"
                     />
@@ -151,7 +151,7 @@ export default function CartPage() {
                 {/* Name + Price */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-stone-900 text-sm truncate">{item.productName}</h3>
-                  <p className="text-xs text-stone-500 mt-0.5">${item.unitPrice.toFixed(2)} each</p>
+                  <p className="text-xs text-stone-500 mt-0.5">{formatPrice(item.unitPrice)} each</p>
                 </div>
 
                 {/* Quantity stepper */}
@@ -186,7 +186,7 @@ export default function CartPage() {
                 {/* Line total */}
                 <div className="text-right w-20 flex-shrink-0">
                   <p className="font-black text-stone-900 text-sm">
-                    ${(item.totalPrice ?? item.unitPrice * item.quantity).toFixed(2)}
+                    {formatPrice(item.totalPrice ?? item.unitPrice * item.quantity)}
                   </p>
                 </div>
 
@@ -223,7 +223,7 @@ export default function CartPage() {
                       <span className="text-stone-400 ml-1">×{item.quantity}</span>
                     </span>
                     <span className="font-semibold text-stone-800 flex-shrink-0">
-                      ${(item.totalPrice ?? item.unitPrice * item.quantity).toFixed(2)}
+                      {formatPrice(item.totalPrice ?? item.unitPrice * item.quantity)}
                     </span>
                   </div>
                 ))}
@@ -233,7 +233,7 @@ export default function CartPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-black text-stone-900 text-base">Grand Total</span>
                     <span className="font-black text-stone-900 text-xl">
-                      ${(grandTotal || cartItems.reduce((acc, item) => acc + (item.totalPrice ?? item.unitPrice * item.quantity), 0)).toFixed(2)}
+                      {formatPrice(grandTotal || cartItems.reduce((acc, item) => acc + (item.totalPrice ?? item.unitPrice * item.quantity), 0))}
                     </span>
                   </div>
                 </div>
