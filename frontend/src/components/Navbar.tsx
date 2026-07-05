@@ -31,6 +31,7 @@ const NAV_ITEMS = [
   { name: "Verify", href: "/verify", icon: BadgeCheck },
   { name: "BMI Tool", href: "/bmi", icon: Calculator },
   { name: "Cart", href: "/cart", icon: ShoppingCart },
+  { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "Flash Deals", href: "/flash-sales", icon: Zap },
   { name: "Settings", href: "/settings", icon: Settings },
 

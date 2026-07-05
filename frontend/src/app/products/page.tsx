@@ -59,25 +59,25 @@ function SkeletonProductCard() {
 // ─── Main Page ─────────────────────────────────────────────────────────────
 export default function ProductsPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
-  const addItem     = useCartStore((state) => state.addItem);
+  const addItem = useCartStore((state) => state.addItem);
 
-  const [products,              setProducts]              = useState<Product[]>([]);
-  const [flashSales,            setFlashSales]            = useState<Product[]>([]);
-  const [personalizedProducts,  setPersonalizedProducts]  = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [flashSales, setFlashSales] = useState<Product[]>([]);
+  const [personalizedProducts, setPersonalizedProducts] = useState<Product[]>([]);
 
-  const [pageNumber,         setPageNumber]         = useState(1);
-  const [hasMore,            setHasMore]            = useState(true);
-  const [isMoreLoading,      setIsMoreLoading]      = useState(false);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isMoreLoading, setIsMoreLoading] = useState(false);
   const PAGE_SIZE = 8;
 
-  const [searchQuery,       setSearchQuery]       = useState("");
-  const [selectedCategory,  setSelectedCategory]  = useState("All");
-  const [selectedBrand,     setSelectedBrand]     = useState("All");
-  const [notifiedProductIds,setNotifiedProductIds]= useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedBrand, setSelectedBrand] = useState("All");
+  const [notifiedProductIds, setNotifiedProductIds] = useState<number[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isClient,  setIsClient]  = useState(false);
-  const [error,     setError]     = useState("");
+  const [isClient, setIsClient] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => { setIsClient(true); }, []);
 
@@ -156,12 +156,12 @@ export default function ProductsPage() {
 
   // ── Filter options ────────────────────────────────────────────────────────
   const categories = ["All", ...Array.from(new Set(products.map((p) => p.categoryName)))];
-  const brands     = ["All", ...Array.from(new Set(products.map((p) => p.brandName)))];
+  const brands = ["All", ...Array.from(new Set(products.map((p) => p.brandName)))];
 
   const filteredProducts = products.filter((p) => {
-    const matchesSearch   = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || p.categoryName === selectedCategory;
-    const matchesBrand    = selectedBrand === "All" || p.brandName === selectedBrand;
+    const matchesBrand = selectedBrand === "All" || p.brandName === selectedBrand;
     return matchesSearch && matchesCategory && matchesBrand;
   });
 
@@ -373,90 +373,7 @@ export default function ProductsPage() {
       {/* 3. FULL CATALOG                                                    */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <section aria-label="Full product catalog">
-        {/* Filter bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-stone-200 shadow-sm mb-6">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-stone-100 flex items-center justify-center flex-shrink-0">
-              <ShoppingBag className="h-4 w-4 text-stone-600" aria-hidden="true" />
-            </div>
-            <div>
-              <h2 className="text-base font-black text-stone-900">Full Catalog</h2>
-              <p className="text-[11px] text-stone-400">{filteredProducts.length} products</p>
-            </div>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2" role="search" aria-label="Filter products">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" aria-hidden="true" />
-              <Input
-                type="search"
-                placeholder="Search catalog..."
-                aria-label="Search products"
-                className="pl-9 w-48 h-9 text-xs"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {/* Category Filter */}
-            <div className="relative">
-              <select
-                className={cn(
-                  "h-9 pl-3 pr-8 rounded-xl",
-                  "bg-stone-50 border border-stone-200",
-                  "text-xs text-stone-700 font-medium",
-                  "appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400",
-                  "transition-all duration-150"
-                )}
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                aria-label="Filter by category"
-              >
-                <option value="All">All Categories</option>
-                {categories.filter((c) => c !== "All").map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-stone-400 pointer-events-none" aria-hidden="true" />
-            </div>
-
-            {/* Brand Filter */}
-            <div className="relative">
-              <select
-                className={cn(
-                  "h-9 pl-3 pr-8 rounded-xl",
-                  "bg-stone-50 border border-stone-200",
-                  "text-xs text-stone-700 font-medium",
-                  "appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400",
-                  "transition-all duration-150"
-                )}
-                value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
-                aria-label="Filter by brand"
-              >
-                <option value="All">All Brands</option>
-                {brands.filter((b) => b !== "All").map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-stone-400 pointer-events-none" aria-hidden="true" />
-            </div>
-
-            {/* Active filter chips */}
-            {(selectedCategory !== "All" || selectedBrand !== "All" || searchQuery) && (
-              <Button
-                variant="ghost"
-                size="xs"
-                className="text-stone-500 hover:text-stone-800 rounded-xl"
-                onClick={() => { setSelectedCategory("All"); setSelectedBrand("All"); setSearchQuery(""); }}
-                aria-label="Clear all filters"
-              >
-                <SlidersHorizontal className="h-3 w-3" aria-hidden="true" /> Clear
-              </Button>
-            )}
-          </div>
-        </div>
 
         {/* Product Grid */}
         {filteredProducts.length === 0 ? (
