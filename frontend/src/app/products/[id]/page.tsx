@@ -90,6 +90,7 @@ export default function SingleProductPage() {
     });
     try {
       await api.post(`/Carts/add`, { productId: product.id, quantity: 1 });
+      await useCartStore.getState().fetchCart();
       toast.success("Added to Cart!");
     } catch {
       toast.error("Failed to sync with server");

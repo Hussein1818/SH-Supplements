@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
+import { useCartStore } from "../store/cartStore";
 
 export default function AppInitializer({
   children,
@@ -10,6 +11,9 @@ export default function AppInitializer({
 }) {
   const checkRefresh = useAuthStore((state) => state.checkRefresh);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const fetchCart = useCartStore((state) => state.fetchCart);
+  const clearCart = useCartStore((state) => state.clearCart);
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -17,6 +21,30 @@ export default function AppInitializer({
     setIsMounted(true);
     checkRefresh();
   }, [checkRefresh]);
+
+  useEffect(() => {
+    if (accessToken) {
+      fetchCart();
+    } else {
+      clearCart();
+    }
+  }, [accessToken, fetchCart, clearCart]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    const syncCart = () => {
+      fetchCart();
+    };
+    window.addEventListener("focus", syncCart);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        syncCart();
+      }
+    });
+    return () => {
+      window.removeEventListener("focus", syncCart);
+    };
+  }, [accessToken, fetchCart]);
 
   if (!isMounted) {
     return null;

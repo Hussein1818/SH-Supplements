@@ -10,6 +10,11 @@ import {
   Zap,
   Leaf,
   FlaskConical,
+  Package,
+  Dumbbell,
+  Pill,
+  Heart,
+  Droplet,
 } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
@@ -18,6 +23,27 @@ import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { ProductCard } from "@/src/components/products/ProductCard";
 import { cn } from "@/src/lib/utils";
+import { useCartStore } from "@/src/components/store/cartStore";
+
+const getCategoryIcon = (categoryName: string) => {
+  const nameLower = (categoryName || "").toLowerCase();
+  if (nameLower.includes("protein") || nameLower.includes("whey") || nameLower.includes("mass")) {
+    return Dumbbell;
+  }
+  if (nameLower.includes("creatine") || nameLower.includes("strength") || nameLower.includes("workout")) {
+    return FlaskConical;
+  }
+  if (nameLower.includes("vitamin") || nameLower.includes("health") || nameLower.includes("wellness") || nameLower.includes("omega")) {
+    return Heart;
+  }
+  if (nameLower.includes("hydrat") || nameLower.includes("electrolyte")) {
+    return Droplet;
+  }
+  if (nameLower.includes("pill") || nameLower.includes("capsule") || nameLower.includes("supplement")) {
+    return Pill;
+  }
+  return Package;
+};
 
 // ─── Interfaces (unchanged) ────────────────────────────────────────────────
 interface FlashSaleProduct {
@@ -66,10 +92,10 @@ function SkeletonCategory({ wide = false }: { wide?: boolean }) {
 
 // ─── Page Component ────────────────────────────────────────────────────────
 export default function Home() {
-  const [flashSales,        setFlashSales]        = useState<FlashSaleProduct[]>([]);
-  const [categories,        setCategories]        = useState<Category[]>([]);
-  const [featuredProducts,  setFeaturedProducts]  = useState<any[]>([]);
-  const [isLoading,         setIsLoading]         = useState(true);
+  const [flashSales, setFlashSales] = useState<FlashSaleProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // ── Data fetching (logic unchanged) ──────────────────────────────────────
   useEffect(() => {
@@ -100,8 +126,26 @@ export default function Home() {
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short" });
 
-  const handleAddToCart = (productName: string) =>
-    toast.success(`${productName} added to cart!`);
+  const addItem = useCartStore((state) => state.addItem);
+
+  const handleAddToCart = async (product: FlashSaleProduct) => {
+    if (product.stockQuantity <= 0) return;
+    const activePrice = product.discountPrice > 0 ? product.discountPrice : product.originalPrice;
+    addItem({
+      productId: String(product.id),
+      productName: product.name,
+      unitPrice: activePrice,
+      quantity: 1,
+      productImageUrl: product.imageUrl || "",
+    });
+    try {
+      await api.post("/Carts/add", { productId: product.id, quantity: 1 });
+      await useCartStore.getState().fetchCart();
+      toast.success(`${product.name} added to cart!`);
+    } catch {
+      toast.error("Failed to add to cart");
+    }
+  };
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (isLoading) {
@@ -220,21 +264,21 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             {
-              icon:  Truck,
+              icon: Truck,
               title: "Fast Nationwide Delivery",
-              desc:  "Orders shipped within 24 hours",
+              desc: "Orders shipped within 24 hours",
               color: "emerald",
             },
             {
-              icon:  ShieldCheck,
+              icon: ShieldCheck,
               title: "100% Authentic Products",
-              desc:  "Every product is verified original",
+              desc: "Every product is verified original",
               color: "emerald",
             },
             {
-              icon:  FlaskConical,
+              icon: FlaskConical,
               title: "Clinically Tested",
-              desc:  "Third-party lab tested for purity",
+              desc: "Third-party lab tested for purity",
               color: "emerald",
             },
           ].map(({ icon: Icon, title, desc, color }) => (
@@ -259,7 +303,6 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {categories.length > 0 && (
         <section className="container-xl py-12" aria-label="Shop by category">
-          {/* Section header */}
           <div className="flex items-end justify-between mb-7">
             <div>
               <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">
@@ -278,41 +321,48 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {categories.map((category, index) => (
-              <Link
-                key={category.id}
-                href={`/categories/${category.id}`}
-                className={cn(
-                  index === 0 ? "md:col-span-2 min-h-[280px]" : "min-h-[200px] md:min-h-[280px]",
-                  "relative rounded-3xl overflow-hidden group block cursor-pointer",
-                  "bg-stone-800 border border-stone-200"
-                )}
-                aria-label={`Browse ${category.name}`}
-              >
-                {/* Background image */}
-                <div
-                  className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:scale-105 group-hover:opacity-70 transition-all duration-500"
-                  style={{ backgroundImage: `url('${category.imageUrl}')` }}
-                  aria-hidden="true"
-                />
-                {/* Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/20 to-transparent" aria-hidden="true" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {categories.map((category, index) => {
+              const Icon = getCategoryIcon(category.name);
+              return (
+                <Link
+                  key={category.id}
+                  href={`/categories/${category.id}`}
+                  className={cn(
+                    "relative rounded-3xl overflow-hidden group block cursor-pointer p-6",
+                    "bg-white border border-stone-200 shadow-sm hover:shadow-md hover:-translate-y-0.5",
+                    "transition-all duration-300 flex flex-col justify-between min-h-[180px] md:min-h-[200px]"
+                  )}
+                  aria-label={`Browse ${category.name}`}
+                >
+                  {/* Icon badge */}
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center group-hover:bg-emerald-600 group-hover:border-emerald-600 transition-all duration-300">
+                    <Icon
+                      className="h-6 w-6 text-emerald-600 group-hover:text-white transition-colors duration-300"
+                      aria-hidden="true"
+                    />
+                  </div>
 
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-between items-end">
-                  <div className="text-white">
-                    <h3 className="text-xl font-black mb-1">{category.name}</h3>
-                    <p className="text-xs text-stone-300 line-clamp-1 max-w-[80%]">
-                      {category.description}
-                    </p>
+                  {/* Content */}
+                  <div className="mt-6 flex items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-black text-stone-900 mb-1">
+                        {category.name}
+                      </h3>
+                      <p className="text-xs text-stone-500 line-clamp-1">
+                        {category.description}
+                      </p>
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-stone-100 group-hover:bg-emerald-600 flex items-center justify-center transition-all duration-200 flex-shrink-0">
+                      <ArrowRight
+                        className="h-3.5 w-3.5 text-stone-600 group-hover:text-white transition-colors duration-200"
+                        aria-hidden="true"
+                      />
+                    </div>
                   </div>
-                  <div className="h-9 w-9 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 group-hover:bg-emerald-600 group-hover:border-emerald-600 flex items-center justify-center transition-all duration-200 flex-shrink-0">
-                    <ArrowRight className="h-4 w-4 text-white" aria-hidden="true" />
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
@@ -448,7 +498,7 @@ export default function Home() {
 
                     {/* CTA */}
                     <button
-                      onClick={() => handleAddToCart(product.name)}
+                      onClick={() => handleAddToCart(product)}
                       disabled={product.stockQuantity <= 0}
                       aria-label={
                         product.stockQuantity > 0

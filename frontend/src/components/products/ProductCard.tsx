@@ -60,6 +60,7 @@ export const ProductCard = ({ product, isRecommended = false, className }: Produ
         productImageUrl: product.mainImageUrl ?? "",
       });
       await api.post("/Carts/add", { productId: product.id, quantity: 1 });
+      await useCartStore.getState().fetchCart();
       toast.success("Added to cart!");
     } catch {
       toast.error("Failed to add to cart");

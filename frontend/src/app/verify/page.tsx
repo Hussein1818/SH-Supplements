@@ -236,46 +236,6 @@ export default function VerifyPage() {
             </Card>
           )}
         </div>
-
-        {/* Right Column: Sidebars */}
-        <div className="space-y-6">
-          {/* Scan QR Widget */}
-          <Card className="border border-gray-100 shadow-sm rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 text-white border-none">
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg">Quick Scan</h3>
-                <Camera className="h-5 w-5 text-gray-400" />
-              </div>
-              <p className="text-sm text-gray-300">
-                Tap to open your camera and scan the QR code for instant
-                verification.
-              </p>
-              <Button className="w-full bg-white text-gray-900 hover:bg-gray-100 font-bold">
-                <Camera className="h-4 w-4 mr-2" /> Open Scanner
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Recent Verifications Widget */}
-          <Card className="border border-gray-100 shadow-sm rounded-2xl">
-            <CardHeader className="pb-3 border-b border-gray-50">
-              <CardTitle className="text-sm font-bold flex items-center text-gray-900">
-                <History className="h-4 w-4 mr-2 text-gray-400" /> Recent Checks
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-gray-50">
-                <div className="p-4 flex items-center justify-between hover:bg-gray-50 cursor-pointer transition-colors">
-                  <div>
-                    <p className="text-xs font-bold text-gray-900">A1B2-C3D4</p>
-                    <p className="text-[10px] text-gray-500">2 hours ago</p>
-                  </div>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );

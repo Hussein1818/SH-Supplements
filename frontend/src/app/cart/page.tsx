@@ -233,7 +233,7 @@ export default function CartPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-black text-stone-900 text-base">Grand Total</span>
                     <span className="font-black text-stone-900 text-xl">
-                      ${grandTotal.toFixed(2)}
+                      ${(grandTotal || cartItems.reduce((acc, item) => acc + (item.totalPrice ?? item.unitPrice * item.quantity), 0)).toFixed(2)}
                     </span>
                   </div>
                 </div>
