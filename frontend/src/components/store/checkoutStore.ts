@@ -1,11 +1,12 @@
 import { create } from "zustand";
 
 export interface CheckoutItem {
-  id: string;
-  name: string;
-  imageUrl: string;
+  productId: string;
+  productName: string;
+  productImageUrl: string;
   quantity: number;
-  price: number;
+  unitPrice: number;
+  totalPrice: number;
 }
 
 interface CheckoutData {

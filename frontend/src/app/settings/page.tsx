@@ -28,6 +28,7 @@ import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/components/store/authStore";
 import { useRouter } from "next/navigation";
+import { useCartStore } from "@/src/components/store/cartStore";
 
 interface AddressData {
   street: string;
@@ -121,7 +122,7 @@ export default function SettingsPage() {
     try {
       await api.put(`/User/address/${id}/set-default`);
       toast.success("Default address updated!");
-      fetchAddresses(); 
+      fetchAddresses();
     } catch (error) {
       toast.error("Failed to update default address.");
     }
@@ -131,6 +132,7 @@ export default function SettingsPage() {
   async function handleLogOut() {
     try {
       await api.post("/Auth/revoke-token");
+      useCartStore.getState().clearCart();
     } catch (error) {
       console.error("Logout error", error);
     } finally {

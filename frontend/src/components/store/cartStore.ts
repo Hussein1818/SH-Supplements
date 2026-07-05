@@ -1,12 +1,13 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 interface CartItem {
-  id: string;
-  ProductName: string;
+  id?: string;
+  productId: string;
+  productName: string;
   unitPrice: number;
   quantity: number;
   productImageUrl?: string;
+  totalPrice?: number;
 }
 
 interface CartStore {
@@ -15,40 +16,42 @@ interface CartStore {
   removeItem: (id: string) => void;
   clearCart: () => void;
   updateQuantity: (id: string, quantity: number) => void;
+  setCart: (items: CartItem[]) => void; 
 }
 
-export const useCartStore = create<CartStore>()(
-  persist(
-    (set) => ({
-      items: [],
-      addItem: (newItem) =>
-        set((state) => {
-          const existingItem = state.items.find(
-            (item) => item.id === newItem.id,
-          );
-          if (existingItem) {
-            return {
-              items: state.items.map((item) =>
-                item.id === newItem.id
-                  ? { ...item, quantity: item.quantity + 1 }
-                  : item,
-              ),
-            };
-          }
-          return { items: [...state.items, { ...newItem, quantity: 1 }] };
-        }),
-      removeItem: (id) =>
-        set((state) => ({
-          items: state.items.filter((item) => item.id !== id),
-        })),
-      clearCart: () => set({ items: [] }),
-      updateQuantity: (id, quantity) =>
-        set((state) => ({
+export const useCartStore = create<CartStore>((set) => ({
+  items: [],
+
+  addItem: (newItem) =>
+    set((state) => {
+      const existingItem = state.items.find(
+        (item) => item.productId === newItem.productId,
+      );
+      if (existingItem) {
+        return {
           items: state.items.map((item) =>
-            item.id === id ? { ...item, quantity } : item,
+            item.productId === newItem.productId
+              ? { ...item, quantity: item.quantity + 1 }
+              : item,
           ),
-        })),
+        };
+      }
+      return { items: [...state.items, { ...newItem, quantity: 1 }] };
     }),
-    { name: "cart-storage" },
-  ),
-);
+
+  removeItem: (id) =>
+    set((state) => ({
+      items: state.items.filter((item) => item.id !== id),
+    })),
+
+  clearCart: () => set({ items: [] }),
+
+  updateQuantity: (id, quantity) =>
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.id === id ? { ...item, quantity } : item,
+      ),
+    })),
+
+  setCart: (items) => set({ items }),
+}));

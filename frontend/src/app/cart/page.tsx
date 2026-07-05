@@ -61,7 +61,7 @@ export default function CartPage() {
     if (newQuantity < 1) return;
     try {
       await api.put(`/Carts/update-quantity`, {
-        cartItemId,
+        cartItemId: cartItemId,
         quantity: newQuantity,
       });
       updateQuantityStore(cartItemId, newQuantity);
@@ -98,12 +98,12 @@ export default function CartPage() {
       <div className="space-y-4">
         {cartItems.map((item) => (
           <div
-            key={item.id}
+            key={item.productId}
             className="flex items-center justify-between p-4 bg-white border rounded-2xl shadow-sm"
           >
             <div className="flex items-center gap-4">
               <img
-                src={item.productImageUrl}
+                src={item.productImageUrl || "/placeholder.png"}
                 alt={item.productName}
                 className="w-16 h-16 object-cover rounded-xl"
               />
@@ -142,7 +142,10 @@ export default function CartPage() {
                 </Button>
               </div>
               <p className="font-bold w-20 text-right">
-                ${item.totalPrice.toFixed(2)}
+                $
+                {(item.totalPrice || item.unitPrice * item.quantity).toFixed(
+                  2,
+                )}{" "}
               </p>
               <Button
                 variant="ghost"
@@ -150,7 +153,7 @@ export default function CartPage() {
                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
                 onClick={() => handleRemoveItem(item.id)}
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-5 h-5" /> 
               </Button>
             </div>
           </div>
