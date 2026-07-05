@@ -6,11 +6,13 @@ using MediatR;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace Core.Application.Features.Users.Queries;
 
 public class GetUserProfileQuery : IRequest<UserProfileDto>
 {
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
 }
 
@@ -43,6 +45,7 @@ public class GetUserProfileQueryHandler : IRequestHandler<GetUserProfileQuery, U
             PhoneNumber = profile.PhoneNumber,
             Age = profile.Age,
             Weight = profile.Weight,
+            ProfileImageUrl = profile.ProfileImageUrl,
             Height = profile.Height,
             Goal = profile.Goal,
             MedicalConditions = profile.MedicalConditions,

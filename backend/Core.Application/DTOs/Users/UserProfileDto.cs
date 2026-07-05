@@ -15,5 +15,6 @@ public class UserProfileDto
     public UserGoal Goal { get; set; }
     public string? MedicalConditions { get; set; }
     public decimal WalletBalance { get; set; }
+    public string? ProfileImageUrl { get; set; }
     public List<AddressDto> Addresses { get; set; } = new();
 }

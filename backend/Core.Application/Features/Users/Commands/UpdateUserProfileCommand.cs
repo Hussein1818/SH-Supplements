@@ -17,6 +17,7 @@ public class UpdateUserProfileCommand : IRequest<bool>
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
+    public string? ProfileImageUrl { get; set; }
     public int Age { get; set; }
     public decimal Weight { get; set; }
     public decimal Height { get; set; }
@@ -46,6 +47,7 @@ public class UpdateUserProfileCommandHandler : IRequestHandler<UpdateUserProfile
         profile.FirstName = request.FirstName;
         profile.LastName = request.LastName;
         profile.PhoneNumber = request.PhoneNumber;
+        profile.ProfileImageUrl = request.ProfileImageUrl;
         profile.Age = request.Age;
         profile.Weight = request.Weight;
         profile.Height = request.Height;
