@@ -83,8 +83,8 @@ export default function VerifyPage() {
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8" dir="ltr">
       {/* Header Section */}
       <div className="text-center max-w-2xl mx-auto space-y-4 mb-12">
-        <div className="inline-flex items-center justify-center p-3 bg-blue-50 rounded-full mb-2">
-          <ShieldCheck className="h-8 w-8 text-[#0044CC]" />
+        <div className="inline-flex items-center justify-center p-3 bg-emerald-50 rounded-full mb-2">
+          <ShieldCheck className="h-8 w-8 text-[#059669]" />
         </div>
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
           Verify Product Authenticity
@@ -121,7 +121,7 @@ export default function VerifyPage() {
                         />
                       </div>
                       <Button
-                        className="h-12 px-8 bg-[#0044CC] hover:bg-[#0033AA] text-white font-bold min-w-[140px]"
+                        className="h-12 px-8 bg-[#059669] hover:bg-[#047857] text-white font-bold min-w-[140px]"
                         type="submit"
                         disabled={verifyState === "loading"}
                       >
@@ -135,7 +135,7 @@ export default function VerifyPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <Info className="h-4 w-4 text-[#0044CC] shrink-0" />
+                  <Info className="h-4 w-4 text-[#059669] shrink-0" />
                   <p>
                     You can find the serial number scratched under the silver
                     foil on the cap.

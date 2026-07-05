@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/src/components/auth/axiosInstance";
 import { Button } from "@/src/components/ui/button";
+import { Badge } from "@/src/components/ui/badge";
 import {
   ShoppingCart,
   ArrowLeft,
@@ -12,12 +13,17 @@ import {
   CheckCircle2,
   XCircle,
   Sparkles,
+  Package,
+  Globe,
+  Flame,
 } from "lucide-react";
 import Link from "next/link";
 import { useCartStore } from "@/src/components/store/cartStore";
 import { toast } from "sonner";
 import { ProductCard } from "@/src/components/products/ProductCard";
+import { cn } from "@/src/lib/utils";
 
+// ─── Interfaces (unchanged) ────────────────────────────────────────────────
 interface ProductImage {
   id: string;
   imageUrl: string;
@@ -36,268 +42,328 @@ interface Product {
   ingredients: string;
   warnings: string;
   expiryDate: string;
-  category: {
-    id: string;
-    name: string;
-  };
-  brand: {
-    id: string;
-    name: string;
-    countryOfOrigin: string;
-  };
+  category: { id: string; name: string };
+  brand: { id: string; name: string; countryOfOrigin: string };
   images: ProductImage[];
 }
 
+// ─── Skeleton ──────────────────────────────────────────────────────────────
+function SkeletonDetail() {
+  return (
+    <div className="container-xl py-8 space-y-8" dir="ltr">
+      <div className="skeleton h-4 w-32 rounded-lg" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="skeleton rounded-3xl aspect-square" />
+        <div className="space-y-5 py-4">
+          <div className="skeleton h-4 w-1/2 rounded-lg" />
+          <div className="skeleton h-10 w-3/4 rounded-lg" />
+          <div className="skeleton h-8 w-1/3 rounded-lg" />
+          <div className="skeleton h-24 w-full rounded-2xl" />
+          <div className="skeleton h-12 w-full rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────
 export default function SingleProductPage() {
   const { id } = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product,      setProduct]      = useState<Product | null>(null);
   const [alternatives, setAlternatives] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading,    setIsLoading]    = useState(true);
+  const [isAdding,     setIsAdding]     = useState(false);
+  const [activeImage,  setActiveImage]  = useState<string>("");
 
   const addItem = useCartStore((state) => state.addItem);
 
+  // ── Cart handler (logic unchanged) ────────────────────────────────────────
   const handleAddToCart = async () => {
-    if (!product) return;
-
-    const activePrice = product.discountPrice
-      ? product.discountPrice
-      : product.price;
-
-    const mainImg =
-      product.images?.find((img) => img.isMainImage)?.imageUrl || "";
-
+    if (!product || isAdding) return;
+    const activePrice = product.discountPrice ? product.discountPrice : product.price;
+    const mainImg = product.images?.find((img) => img.isMainImage)?.imageUrl || "";
+    setIsAdding(true);
     addItem({
-      id: product.id,
-      productId: product.id,
-      productName: product.name,
-      unitPrice: activePrice,
-      quantity: 1,
-      productImageUrl: mainImg,
+      id: product.id, productId: product.id,
+      productName: product.name, unitPrice: activePrice,
+      quantity: 1, productImageUrl: mainImg,
     });
-
     try {
-      await api.post(`/Carts/add`, {
-        productId: product.id,
-        quantity: 1,
-      });
+      await api.post(`/Carts/add`, { productId: product.id, quantity: 1 });
       toast.success("Added to Cart!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to sync with server");
+    } finally {
+      setIsAdding(false);
     }
   };
 
+  // ── Data fetching (logic unchanged) ──────────────────────────────────────
   useEffect(() => {
     if (!id) return;
-
     async function fetchProduct() {
       try {
         const response = await api.get(`/Products/${id}`);
         setProduct(response.data);
-      } catch (err) {
+        const main = response.data.images?.find((img: ProductImage) => img.isMainImage)?.imageUrl
+          || response.data.images?.[0]?.imageUrl;
+        setActiveImage(main || "");
+      } catch {
         console.error("Failed to load product details");
       } finally {
         setIsLoading(false);
       }
     }
-
     async function fetchAlternatives() {
       try {
         const response = await api.get(`/Products/${id}/alternatives`);
         setAlternatives(response.data || []);
-      } catch (err) {
+      } catch {
         console.error("Failed to load alternatives");
       }
     }
-
     fetchProduct();
     fetchAlternatives();
   }, [id]);
 
-  if (isLoading)
+  if (isLoading) return <SkeletonDetail />;
+
+  if (!product) {
     return (
-      <div className="p-8 text-center text-gray-500 min-h-[50vh] flex items-center justify-center">
-        Loading details...
+      <div className="container-xl py-24 text-center" dir="ltr">
+        <div className="h-16 w-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+          <Package className="h-8 w-8 text-red-300" aria-hidden="true" />
+        </div>
+        <h1 className="text-xl font-bold text-stone-900 mb-2">Product not found</h1>
+        <p className="text-stone-500 text-sm mb-6">This product may have been removed or is unavailable.</p>
+        <Button asChild variant="outline" className="rounded-xl">
+          <Link href="/products"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Products</Link>
+        </Button>
       </div>
     );
+  }
 
-  if (!product)
-    return (
-      <div className="p-8 text-center text-red-500 min-h-[50vh] flex items-center justify-center">
-        Error loading details
-      </div>
-    );
+  const displayImage = activeImage
+    || product.images?.find((img) => img.isMainImage)?.imageUrl
+    || product.images?.[0]?.imageUrl;
 
-  const displayImage =
-    product.images?.find((img) => img.isMainImage)?.imageUrl ||
-    product.images?.[0]?.imageUrl;
+  const hasDiscount = product.discountPrice != null && product.discountPrice > 0;
+  const discountPct = hasDiscount
+    ? Math.round(((product.price - product.discountPrice!) / product.price) * 100)
+    : 0;
+  const inStock = product.stockQuantity > 0;
+
+  const STATS = [
+    { label: "Flavor",   value: product.flavor   || "N/A" },
+    { label: "Servings", value: product.servings  || "N/A" },
+    { label: "Brand",    value: product.brand?.name || "N/A" },
+    { label: "Origin",   value: product.brand?.countryOfOrigin || "N/A" },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-12" dir="ltr">
-      <div className="space-y-8">
-        <Link
-          href="/products"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Products
-        </Link>
+    <div className="min-h-screen bg-stone-50" dir="ltr">
+      <div className="container-xl py-8 space-y-12">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* Product Image Section */}
-          <div className="bg-white border border-gray-100 shadow-sm rounded-3xl p-8 flex flex-col items-center justify-center min-h-[400px] relative">
-            {product.discountPrice && (
-              <div className="absolute top-6 left-6 bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg z-10">
-                Sale
-              </div>
-            )}
-            {displayImage ? (
-              <img
-                src={displayImage}
-                alt={product.name}
-                className="max-w-full h-auto object-contain mix-blend-multiply"
-              />
-            ) : (
-              <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
-                No Image
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb">
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-emerald-600 transition-colors font-medium"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            Back to Products
+          </Link>
+        </nav>
+
+        {/* ── Product Grid ──────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
+
+          {/* Left — Image Panel */}
+          <div className="space-y-4">
+            {/* Main image */}
+            <div className="relative bg-white border border-stone-200 rounded-3xl overflow-hidden aspect-square flex items-center justify-center shadow-sm">
+              {hasDiscount && (
+                <div className="absolute top-4 left-4 z-10">
+                  <Badge variant="orange-solid" className="font-black text-sm px-2.5 py-1 shadow">
+                    -{discountPct}%
+                  </Badge>
+                </div>
+              )}
+              {displayImage ? (
+                <img
+                  src={displayImage}
+                  alt={product.name}
+                  className="max-w-full max-h-full object-contain p-8 mix-blend-multiply"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-stone-300">
+                  <Package className="h-16 w-16" aria-hidden="true" />
+                  <span className="text-sm">No image</span>
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {product.images && product.images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Product images">
+                {product.images.map((img) => (
+                  <button
+                    key={img.id}
+                    role="tab"
+                    aria-selected={activeImage === img.imageUrl}
+                    aria-label="Select product image"
+                    onClick={() => setActiveImage(img.imageUrl)}
+                    className={cn(
+                      "h-16 w-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all",
+                      activeImage === img.imageUrl
+                        ? "border-emerald-500 shadow-sm"
+                        : "border-stone-200 hover:border-stone-300"
+                    )}
+                  >
+                    <img src={img.imageUrl} alt="" className="h-full w-full object-contain p-1 mix-blend-multiply" aria-hidden="true" />
+                  </button>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Product Info Section */}
-          <div className="flex flex-col justify-center space-y-6">
-            {/* Brand & Category Tags */}
-            <div className="flex items-center gap-3 text-sm font-medium">
-              <span className="text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
-                {product.brand?.name} ({product.brand?.countryOfOrigin})
-              </span>
-              <span className="text-gray-500 bg-gray-100 px-3 py-1 rounded-lg">
+          {/* Right — Info Panel */}
+          <div className="flex flex-col justify-start space-y-6 py-2">
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="emerald" className="font-semibold">
+                {product.brand?.name}
+                {product.brand?.countryOfOrigin && (
+                  <><Globe className="h-3 w-3 ml-1" aria-hidden="true" /> {product.brand.countryOfOrigin}</>
+                )}
+              </Badge>
+              <Badge variant="stone" className="font-semibold">
                 {product.category?.name}
-              </span>
+              </Badge>
             </div>
 
+            {/* Name + Price */}
             <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              <h1 className="text-3xl md:text-4xl font-black text-stone-900 tracking-tight leading-tight mb-4">
                 {product.name}
               </h1>
 
-              <div className="mt-4 flex items-end gap-4">
-                {product.discountPrice ? (
+              <div className="flex items-end gap-3">
+                {hasDiscount ? (
                   <>
-                    <span className="text-4xl font-extrabold text-gray-900">
-                      ${product.discountPrice}
+                    <span className="text-4xl font-black text-stone-900">
+                      ${product.discountPrice!.toFixed(2)}
                     </span>
-                    <span className="text-xl font-medium text-gray-400 line-through mb-1">
-                      ${product.price}
+                    <span className="text-xl text-stone-400 line-through font-medium mb-1">
+                      ${product.price.toFixed(2)}
                     </span>
+                    <Badge variant="orange-solid" className="font-bold mb-1">
+                      Save {discountPct}%
+                    </Badge>
                   </>
                 ) : (
-                  <span className="text-4xl font-extrabold text-gray-900">
-                    ${product.price}
+                  <span className="text-4xl font-black text-stone-900">
+                    ${product.price.toFixed(2)}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-100">
-              <div>
-                <p className="text-sm text-gray-500">Flavor</p>
-                <p className="font-semibold text-gray-900">
-                  {product.flavor || "N/A"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Servings</p>
-                <p className="font-semibold text-gray-900">
-                  {product.servings || "N/A"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Stock Status</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {product.stockQuantity > 0 ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      <span className="font-semibold text-green-600">
-                        In Stock ({product.stockQuantity})
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-4 h-4 text-red-500" />
-                      <span className="font-semibold text-red-600">
-                        Out of Stock
-                      </span>
-                    </>
-                  )}
+            {/* Stock status */}
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold w-fit",
+                inStock
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "bg-red-50 text-red-700 border border-red-200"
+              )}
+              role="status"
+              aria-label={inStock ? `In stock: ${product.stockQuantity} available` : "Out of stock"}
+            >
+              {inStock ? (
+                <><CheckCircle2 className="h-4 w-4" aria-hidden="true" /> In Stock ({product.stockQuantity} available)</>
+              ) : (
+                <><XCircle className="h-4 w-4" aria-hidden="true" /> Out of Stock</>
+              )}
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 gap-3 py-4 border-y border-stone-200">
+              {STATS.map(({ label, value }) => (
+                <div key={label} className="space-y-0.5">
+                  <p className="text-xs font-bold text-stone-400 uppercase tracking-wider">{label}</p>
+                  <p className="text-sm font-semibold text-stone-800">{value}</p>
                 </div>
-              </div>
+              ))}
             </div>
 
             {/* Description */}
-            <div className="text-gray-600 leading-relaxed">
-              <p>{product.description}</p>
-            </div>
+            {product.description && (
+              <p className="text-sm text-stone-600 leading-relaxed">{product.description}</p>
+            )}
 
-            {/* Action Button */}
-            <div className="pt-2">
-              <Button
-                size="lg"
-                className="w-full md:w-2/3 rounded-xl flex items-center gap-2 h-14 text-lg bg-[#0044CC] hover:bg-blue-700"
-                onClick={handleAddToCart}
-                disabled={product.stockQuantity === 0}
-              >
-                <ShoppingCart className="w-6 h-6" />
-                {product.stockQuantity > 0 ? "Add to Cart" : "Out of Stock"}
-              </Button>
-            </div>
+            {/* Add to Cart */}
+            <Button
+              size="xl"
+              variant={inStock ? "primary" : "secondary"}
+              className="w-full md:w-auto rounded-xl font-bold shadow-sm"
+              onClick={handleAddToCart}
+              loading={isAdding}
+              disabled={!inStock}
+              aria-label={inStock ? `Add ${product.name} to cart` : "Out of stock"}
+            >
+              {!isAdding && <ShoppingCart className="h-5 w-5" aria-hidden="true" />}
+              {inStock ? "Add to Cart" : "Out of Stock"}
+            </Button>
 
-            {/* Ingredients & Warnings Cards */}
-            <div className="space-y-3 pt-6">
+            {/* Ingredients & Warnings */}
+            <div className="space-y-3">
               {product.ingredients && (
-                <div className="bg-gray-50 p-4 rounded-2xl flex gap-3">
-                  <Info className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-sm mb-1">
-                      Ingredients
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {product.ingredients}
-                    </p>
+                <details className="group bg-stone-50 border border-stone-200 rounded-2xl overflow-hidden">
+                  <summary className="flex items-center gap-3 p-4 cursor-pointer list-none select-none hover:bg-stone-100 transition-colors">
+                    <Info className="h-4 w-4 text-stone-500 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-sm font-semibold text-stone-800">Ingredients</span>
+                    <Flame className="h-3.5 w-3.5 text-stone-300 ml-auto group-open:rotate-180 transition-transform" aria-hidden="true" />
+                  </summary>
+                  <div className="px-4 pb-4 pt-0">
+                    <p className="text-sm text-stone-600 leading-relaxed">{product.ingredients}</p>
                   </div>
-                </div>
+                </details>
               )}
 
               {product.warnings && (
-                <div className="bg-red-50 p-4 rounded-2xl flex gap-3 border border-red-100">
-                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3">
+                  <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
-                    <h4 className="font-bold text-red-900 text-sm mb-1">
-                      Warnings
-                    </h4>
-                    <p className="text-sm text-red-700">{product.warnings}</p>
+                    <h3 className="text-sm font-bold text-red-900 mb-1">Warnings</h3>
+                    <p className="text-sm text-red-700 leading-relaxed">{product.warnings}</p>
                   </div>
                 </div>
               )}
             </div>
           </div>
         </div>
-      </div>
 
-      {alternatives.length > 0 && (
-        <div className="pt-12 border-t border-gray-200">
-          <div className="flex items-center gap-2 mb-8">
-            <Sparkles className="w-6 h-6 text-[#0044CC]" />
-            <h2 className="text-2xl font-black text-gray-900">
-              Recommended Alternatives
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {alternatives.map((alt) => (
-              <ProductCard key={alt.id} product={alt} />
-            ))}
-          </div>
-        </div>
-      )}
+        {/* ── Alternatives ─────────────────────────────────────────────── */}
+        {alternatives.length > 0 && (
+          <section aria-label="Recommended alternatives" className="pt-8 border-t border-stone-200">
+            <div className="flex items-center gap-2.5 mb-7">
+              <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-stone-900 tracking-tight">You Might Also Like</h2>
+                <p className="text-xs text-stone-400">Similar alternatives for your goals</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              {alternatives.map((alt) => (
+                <ProductCard key={alt.id} product={alt} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

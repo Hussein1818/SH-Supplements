@@ -121,7 +121,7 @@ export default function BmiCalculatorPage() {
       return "text-amber-600 bg-amber-50 border-amber-100";
     if (cat.includes("obese"))
       return "text-rose-600 bg-rose-50 border-rose-100";
-    return "text-blue-600 bg-blue-50 border-blue-100";
+    return "text-emerald-600 bg-emerald-50 border-emerald-100";
   };
 
   if (!accessToken || !isClient) return null;
@@ -131,7 +131,7 @@ export default function BmiCalculatorPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-          <Calculator className="h-6 w-6 text-[#0044CC]" /> Metabolic & BMI
+          <Calculator className="h-6 w-6 text-[#059669]" /> Metabolic & BMI
           Calculator
         </h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -146,7 +146,7 @@ export default function BmiCalculatorPage() {
         <Card className="bg-white border-gray-100 shadow-sm rounded-xl">
           <CardContent className="p-5 flex flex-col gap-2 relative overflow-hidden">
             <div className="flex items-center gap-2 text-gray-400">
-              <Activity className="h-4 w-4 text-[#0044CC]" />
+              <Activity className="h-4 w-4 text-[#059669]" />
               <span className="text-[10px] font-bold uppercase tracking-wider">
                 BMI Score
               </span>
@@ -211,7 +211,7 @@ export default function BmiCalculatorPage() {
         <Card className="bg-white border-gray-100 shadow-sm rounded-xl lg:col-span-1 h-max">
           <CardHeader>
             <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Calculator className="h-4 w-4 text-[#0044CC]" /> Calculate
+              <Calculator className="h-4 w-4 text-[#059669]" /> Calculate
               Metrics
             </CardTitle>
             <CardDescription className="text-xs">
@@ -322,7 +322,7 @@ export default function BmiCalculatorPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#0044CC] hover:bg-[#0033AA] text-white font-bold text-sm py-2 rounded-md"
+                className="w-full bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm py-2 rounded-md"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
@@ -338,7 +338,7 @@ export default function BmiCalculatorPage() {
         <Card className="bg-white border-gray-100 shadow-sm rounded-xl lg:col-span-2 flex flex-col">
           <CardHeader>
             <CardTitle className="text-base font-bold flex items-center gap-1.5">
-              <History className="h-4 w-4 text-[#0044CC]" /> Metabolic Log
+              <History className="h-4 w-4 text-[#059669]" /> Metabolic Log
               History
             </CardTitle>
             <CardDescription className="text-xs">

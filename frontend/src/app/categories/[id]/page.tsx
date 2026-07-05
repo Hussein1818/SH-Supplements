@@ -59,7 +59,7 @@ export default function CategoryProductsPage() {
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="w-10 h-10 animate-spin text-[#0044CC]" />
+          <Loader2 className="w-10 h-10 animate-spin text-[#059669]" />
         </div>
       ) : products.length > 0 ? (
         <>
@@ -77,7 +77,7 @@ export default function CategoryProductsPage() {
             >
               <ChevronLeft className="w-4 h-4 mr-2" /> Prev
             </Button>
-            <span className="font-black text-[#0044CC]">Page {pageNumber}</span>
+            <span className="font-black text-[#059669]">Page {pageNumber}</span>
             <Button
               variant="outline"
               disabled={!hasMore}

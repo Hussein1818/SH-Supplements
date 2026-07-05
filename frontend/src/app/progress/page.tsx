@@ -159,11 +159,11 @@ export default function ProgressPage() {
       {
         label: "Weight (kg)",
         data: cleanChartData.map((item) => item.weight),
-        borderColor: "#0044CC",
+        borderColor: "#059669",
         backgroundColor: "rgba(0, 68, 204, 0.04)",
         tension: 0.3,
         fill: true,
-        pointBackgroundColor: "#0044CC",
+        pointBackgroundColor: "#059669",
       },
       {
         label: "Body Fat (%)",
@@ -210,7 +210,7 @@ export default function ProgressPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-[#0044CC]" /> Performance &
+          <TrendingUp className="h-6 w-6 text-[#059669]" /> Performance &
           Progress Tracker
         </h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -270,7 +270,7 @@ export default function ProgressPage() {
         <Card className="bg-white border-gray-100 shadow-sm rounded-xl lg:col-span-1 h-max">
           <CardHeader>
             <CardTitle className="text-base font-bold flex items-center gap-1.5">
-              <Save className="h-4 w-4 text-[#0044CC]" /> Log Progress
+              <Save className="h-4 w-4 text-[#059669]" /> Log Progress
             </CardTitle>
             <CardDescription className="text-xs">
               Enter your metrics for today.
@@ -339,7 +339,7 @@ export default function ProgressPage() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-[#0044CC] hover:bg-[#0033AA] text-white font-medium text-sm py-2 rounded-md"
+                className="w-full bg-[#059669] hover:bg-[#047857] text-white font-medium text-sm py-2 rounded-md"
               >
                 <Save className="h-4 w-4 mr-1.5" /> Log Measurements
               </Button>
@@ -351,7 +351,7 @@ export default function ProgressPage() {
         <Card className="bg-white border-gray-100 shadow-sm rounded-xl lg:col-span-2 flex flex-col">
           <CardHeader>
             <CardTitle className="text-base font-bold flex items-center gap-1.5">
-              <LineChartIcon className="h-4 w-4 text-[#0044CC]" />{" "}
+              <LineChartIcon className="h-4 w-4 text-[#059669]" />{" "}
               Transformation Overview
             </CardTitle>
             <CardDescription className="text-xs">
@@ -408,7 +408,7 @@ export default function ProgressPage() {
                             <td className="py-3.5 px-2 font-bold text-gray-900">
                               {new Date(item.dateRecorded).toLocaleDateString()}
                             </td>
-                            <td className="py-3.5 px-2 font-black text-[#0044CC]">
+                            <td className="py-3.5 px-2 font-black text-[#059669]">
                               {item.weight} kg
                             </td>
                             <td className="py-3.5 px-2 font-semibold text-gray-700">
@@ -442,7 +442,7 @@ export default function ProgressPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-gray-500 hover:text-[#0044CC] hover:bg-blue-50 transition-colors"
+                    className="text-xs text-gray-500 hover:text-[#059669] hover:bg-emerald-50 transition-colors"
                     onClick={() =>
                       setVisibleRecords(
                         visibleRecords === 5 ? progress.length : 5,

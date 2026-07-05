@@ -56,7 +56,7 @@ export const OrderSummary = () => {
             {shippingFee === 0 ? "Free" : `$${shippingFee.toFixed(2)}`}
           </span>
         </div>
-        <div className="flex justify-between font-black text-xl pt-4 border-t border-gray-200 text-[#0044CC]">
+        <div className="flex justify-between font-black text-xl pt-4 border-t border-gray-200 text-emerald-600">
           <span>Total</span>
           <span>${total.toFixed(2)}</span>
         </div>
