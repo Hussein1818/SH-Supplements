@@ -37,7 +37,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     setIsClient(true);
     if (!accessToken) {
-      router.replace("/login");
+      router.replace("/login?redirect=/orders/checkout");
     }
   }, [accessToken, router]);
 

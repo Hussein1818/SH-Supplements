@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   User, ShieldCheck, Pencil, Save, X,
   Phone, Scale, Ruler, Target, MapPin,
   Wallet, Activity, CheckCircle2, Leaf,
+  Camera, Upload, Minus, Plus, RotateCcw, ZoomIn,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/src/components/store/authStore";
@@ -14,7 +15,7 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
-import { cn, formatPrice } from "@/src/lib/utils";
+import { cn, formatPrice, normalizeImageUrl } from "@/src/lib/utils";
 
 // ─── Types (unchanged) ─────────────────────────────────────────────────────
 interface AddressData {
@@ -28,6 +29,8 @@ type UserData = {
   height: number; goal: number;
   medicalConditions: string | null;
   walletBalance: number; addresses: AddressData[];
+  profileImageUrl?: string | null;
+  ProfileImageUrl?: string | null;
 };
 
 type SimpleFieldKey = "firstName" | "lastName" | "phoneNumber" | "age" | "weight" | "height" | "goal";
@@ -59,8 +62,19 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving,  setIsSaving]  = useState(false);
 
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const router      = useRouter();
+  const accessToken  = useAuthStore((state) => state.accessToken);
+  const router       = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Cropper Modal State ──────────────────────────────────────────────────
+  const [cropModalSrc, setCropModalSrc] = useState<string | null>(null);
+  const [zoom, setZoom]                 = useState(1);
+  const [offset, setOffset]             = useState({ x: 0, y: 0 });
+  const isDraggingRef                   = useRef(false);
+  const startPosRef                     = useRef({ x: 0, y: 0 });
+  const previewCanvasRef                = useRef<HTMLCanvasElement>(null);
+  const imgRef                          = useRef<HTMLImageElement | null>(null);
+  const baseScaleRef                    = useRef(1);
 
   // ── Data fetch (logic unchanged) ──────────────────────────────────────────
   useEffect(() => {
@@ -70,11 +84,148 @@ export default function ProfilePage() {
       .catch(() => toast.error("Failed to load profile data"));
   }, [accessToken, router]);
 
-  // ── Save handler (logic unchanged) ───────────────────────────────────────
+  // ── Canvas Cropper Logic ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!cropModalSrc) return;
+    const img = new Image();
+    img.src = cropModalSrc;
+    img.onload = () => {
+      imgRef.current = img;
+      const scaleX = 256 / img.naturalWidth;
+      const scaleY = 256 / img.naturalHeight;
+      baseScaleRef.current = Math.max(scaleX, scaleY);
+      drawPreview();
+    };
+  }, [cropModalSrc]);
+
+  useEffect(() => {
+    drawPreview();
+  }, [zoom, offset]);
+
+  const drawPreview = () => {
+    const canvas = previewCanvasRef.current;
+    const img = imgRef.current;
+    if (!canvas || !img) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, 256, 256);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(128, 128, 128, 0, Math.PI * 2);
+    ctx.clip();
+
+    const currentScale = baseScaleRef.current * zoom;
+    const dw = img.naturalWidth * currentScale;
+    const dh = img.naturalHeight * currentScale;
+    const dx = (256 - dw) / 2 + offset.x;
+    const dy = (256 - dh) / 2 + offset.y;
+
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDraggingRef.current = true;
+    startPosRef.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current) return;
+    setOffset({
+      x: e.clientX - startPosRef.current.x,
+      y: e.clientY - startPosRef.current.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    isDraggingRef.current = true;
+    startPosRef.current = { x: touch.clientX - offset.x, y: touch.clientY - offset.y };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch || !isDraggingRef.current) return;
+    setOffset({
+      x: touch.clientX - startPosRef.current.x,
+      y: touch.clientY - startPosRef.current.y,
+    });
+  };
+
+  const handleApplyCrop = () => {
+    const img = imgRef.current;
+    if (!img) return;
+    const offscreen = document.createElement("canvas");
+    offscreen.width = 400;
+    offscreen.height = 400;
+    const ctx = offscreen.getContext("2d");
+    if (!ctx) return;
+
+    const scaleOut = 400 / 256;
+    const currentScale = baseScaleRef.current * zoom * scaleOut;
+    const dw = img.naturalWidth * currentScale;
+    const dh = img.naturalHeight * currentScale;
+    const dx = ((400 - dw) / 2) + (offset.x * scaleOut);
+    const dy = ((400 - dh) / 2) + (offset.y * scaleOut);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 400, 400);
+    ctx.drawImage(img, dx, dy, dw, dh);
+
+    const croppedBase64 = offscreen.toDataURL("image/jpeg", 0.92);
+    setEditForm((prev) => prev ? { ...prev, profileImageUrl: croppedBase64, ProfileImageUrl: croppedBase64 } : null);
+    if (!isEditing) {
+      setIsEditing(true);
+      toast.info("Photo cropped! Click 'Save' to apply changes.");
+    } else {
+      toast.success("Photo cropped & updated!");
+    }
+    setCropModalSrc(null);
+  };
+
+  // ── Image handler ────────────────────────────────────────────────────────
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Unsupported file format. Please upload a JPG, PNG, or WEBP image.");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error("Image size too large. Please select an image under 5MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Str = event.target?.result as string;
+      setCropModalSrc(base64Str);
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  // ── Save handler ─────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!editForm) return;
     setIsSaving(true);
     try {
+      const activeImageUrl = editForm.profileImageUrl !== undefined
+        ? editForm.profileImageUrl
+        : (editForm.ProfileImageUrl || "");
+
       const payload = {
         userId:           userData?.id,
         firstName:        editForm.firstName,
@@ -85,9 +236,17 @@ export default function ProfilePage() {
         height:           Number(editForm.height),
         goal:             Number(editForm.goal),
         medicalConditions:editForm.medicalConditions || "",
+        profileImageUrl:  activeImageUrl,
+        ProfileImageUrl:  activeImageUrl,
       };
       await api.put("/User/profile", payload);
-      setUserData(editForm);
+      try {
+        const res = await api.get("/User/profile");
+        setUserData(res.data);
+        setEditForm(res.data);
+      } catch {
+        setUserData(editForm);
+      }
       setIsEditing(false);
       toast.success("Profile updated successfully!");
     } catch {
@@ -152,7 +311,7 @@ export default function ProfilePage() {
             {/* Avatar card */}
             <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
               {/* Emerald top bar */}
-              <div className="h-20 bg-gradient-to-r from-emerald-600 to-emerald-500 relative">
+              <div className="h-24 sm:h-28 bg-gradient-to-r from-emerald-600 to-emerald-500 relative">
                 <div
                   className="absolute inset-0 opacity-10"
                   style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)", backgroundSize: "16px 16px" }}
@@ -160,11 +319,40 @@ export default function ProfilePage() {
                 />
               </div>
 
-              <div className="px-6 pb-6 -mt-10 text-center">
-                <div className="h-20 w-20 rounded-full bg-white border-4 border-white shadow-md flex items-center justify-center mx-auto">
-                  <div className="h-full w-full rounded-full bg-emerald-50 flex items-center justify-center">
-                    <User className="h-9 w-9 text-emerald-600" aria-hidden="true" />
+              <div className="px-6 pb-6 -mt-14 sm:-mt-18 text-center">
+                {/* Avatar with camera button */}
+                <div className="relative inline-block mx-auto">
+                  <div className="h-28 w-28 sm:h-36 sm:w-36 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden mx-auto">
+                    {(isEditing ? (editForm.profileImageUrl || editForm.ProfileImageUrl) : (userData.profileImageUrl || userData.ProfileImageUrl)) ? (
+                      <img
+                        src={normalizeImageUrl((isEditing ? (editForm.profileImageUrl || editForm.ProfileImageUrl) : (userData.profileImageUrl || userData.ProfileImageUrl)) || "")}
+                        alt={`${userData.firstName} ${userData.lastName}`}
+                        className="h-full w-full rounded-full object-cover aspect-square"
+                      />
+                    ) : (
+                      <div className="h-full w-full rounded-full bg-emerald-50 flex items-center justify-center">
+                        <User className="h-12 w-12 sm:h-16 sm:w-16 text-emerald-600" aria-hidden="true" />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Camera edit button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 p-2 sm:p-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md border-2 border-white transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 cursor-pointer"
+                    aria-label="Upload profile photo"
+                    title="Upload profile photo"
+                  >
+                    <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
                 </div>
 
                 <h2 className="mt-3 text-lg font-black text-stone-900 flex items-center justify-center gap-1.5">
@@ -357,6 +545,117 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Photo Cropping Modal ─────────────────────────────────────── */}
+      {cropModalSrc && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-stone-100 flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+              <div className="flex items-center gap-2">
+                <Camera className="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                <h3 className="font-black text-stone-900 text-lg">Crop & Position Photo</h3>
+              </div>
+              <Button variant="ghost" size="icon-sm" className="rounded-xl text-stone-400 hover:text-stone-700" onClick={() => setCropModalSrc(null)} aria-label="Close modal">
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="p-6 flex flex-col items-center gap-6">
+              <p className="text-xs text-stone-500 font-medium text-center">
+                Drag photo to reposition inside the circle. Use slider to zoom.
+              </p>
+
+              {/* Circular Viewport Canvas */}
+              <div className="relative p-1 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-400 shadow-xl">
+                <canvas
+                  ref={previewCanvasRef}
+                  width={256}
+                  height={256}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleMouseUp}
+                  className="rounded-full bg-stone-900 shadow-inner cursor-move touch-none select-none"
+                  style={{ width: "220px", height: "220px" }}
+                />
+              </div>
+
+              {/* Controls */}
+              <div className="w-full space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                <div className="flex items-center justify-between text-xs font-bold text-stone-600 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5">
+                    <ZoomIn className="h-3.5 w-3.5 text-emerald-600" /> Zoom Level
+                  </span>
+                  <span className="font-black text-emerald-600">{Math.round(zoom * 100)}%</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    className="rounded-xl bg-white flex-shrink-0"
+                    onClick={() => setZoom((z) => Math.max(1, z - 0.1))}
+                    aria-label="Zoom out"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </Button>
+                  <input
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="0.05"
+                    value={zoom}
+                    onChange={(e) => setZoom(parseFloat(e.target.value))}
+                    className="w-full accent-emerald-600 cursor-pointer h-2 bg-stone-200 rounded-lg"
+                    aria-label="Zoom slider"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    className="rounded-xl bg-white flex-shrink-0"
+                    onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
+                    aria-label="Zoom in"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="text-stone-500 hover:text-stone-800 text-xs font-semibold gap-1"
+                    onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}
+                  >
+                    <RotateCcw className="h-3 w-3" /> Reset Center & Zoom
+                  </Button>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-end gap-3 w-full pt-2 border-t border-stone-100">
+                <Button
+                  variant="outline"
+                  className="rounded-xl font-semibold flex-1 sm:flex-initial"
+                  onClick={() => setCropModalSrc(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  className="rounded-xl font-bold flex-1 sm:flex-initial shadow-md"
+                  onClick={handleApplyCrop}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-1.5" /> Apply Crop
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { useState } from "react";
 import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/components/store/authStore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { cn } from "@/src/lib/utils";
 
@@ -23,8 +23,10 @@ export default function Login() {
   const [unverifiedError, setUnverifiedError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const loginStore = useAuthStore((state) => state.login);
-  const router     = useRouter();
+  const loginStore    = useAuthStore((state) => state.login);
+  const router         = useRouter();
+  const searchParams   = useSearchParams();
+  const redirectTo     = searchParams.get("redirect") || "/";
 
   // ── Login handler (logic unchanged) ──────────────────────────────────────
   async function handleLoginSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -41,7 +43,7 @@ export default function Login() {
       const data  = response.data;
       const token = data.token || data.accessToken;
       loginStore(token);
-      router.push("/");
+      router.push(redirectTo as any);
       toast.success("Welcome back!");
     } catch (error: any) {
       const rawMsg = (error.response?.data?.Message || error.response?.data || error.message || "").toString();

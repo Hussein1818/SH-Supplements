@@ -5,9 +5,11 @@ import { ShoppingCart, Eye, Bell, BellCheck, Star, Package } from "lucide-react"
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { useCartStore } from "@/src/components/store/cartStore";
+import { useAuthStore } from "@/src/components/store/authStore";
 import { toast } from "sonner";
 import { api } from "../auth/axiosInstance";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn, formatPrice, normalizeImageUrl } from "@/src/lib/utils";
 
 interface ProductCardProduct {
@@ -30,7 +32,9 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, isRecommended = false, className }: ProductCardProps) => {
-  const addItem  = useCartStore((state) => state.addItem);
+  const addItem      = useCartStore((state) => state.addItem);
+  const accessToken  = useAuthStore((state) => state.accessToken);
+  const router       = useRouter();
   const [isNotified, setIsNotified] = useState(false);
   const [isAdding,   setIsAdding]   = useState(false);
 
@@ -48,6 +52,15 @@ export const ProductCard = ({ product, isRecommended = false, className }: Produ
     product.inStock !== undefined ? product.inStock : (product.stockQuantity ?? 1) > 0;
 
   const handleAddToCart = async () => {
+    if (!accessToken) {
+      toast.error("Please sign in to add products to your cart.", {
+        action: {
+          label: "Sign in",
+          onClick: () => router.push("/login"),
+        },
+      });
+      return;
+    }
     if (!inStock || isAdding) return;
     setIsAdding(true);
     try {

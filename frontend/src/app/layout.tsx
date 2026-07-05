@@ -68,13 +68,19 @@ export default function RootLayout({
         )}
       >
         <Toaster
-          position="top-right"
+          position="bottom-center"
           richColors
           closeButton
+          gap={8}
           toastOptions={{
+            duration: 4000,
             style: {
               fontFamily: "var(--font-sans)",
-              borderRadius: "12px",
+              borderRadius: "14px",
+              padding: "12px 16px",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+              fontSize: "14px",
+              fontWeight: "500",
             },
           }}
         />
