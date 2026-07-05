@@ -25,7 +25,6 @@ export default function CartPage() {
     try {
       setIsLoading(true);
       const response = await api.get(`/Carts/my-cart`);
-
       useCartStore.setState({ items: response.data.items || [] });
       setGrandTotal(response.data.grandTotal || 0);
     } catch (error) {
@@ -44,6 +43,7 @@ export default function CartPage() {
   }, [accessToken, fetchCart]);
 
   const handleRemoveItem = async (cartItemId: string) => {
+    if (!cartItemId) return;
     try {
       await api.delete(`/Carts/remove/${cartItemId}`);
       removeItemStore(cartItemId);
@@ -58,7 +58,7 @@ export default function CartPage() {
     cartItemId: string,
     newQuantity: number,
   ) => {
-    if (newQuantity < 1) return;
+    if (!cartItemId || newQuantity < 1) return;
     try {
       await api.put(`/Carts/update-quantity`, {
         cartItemId: cartItemId,
@@ -109,9 +109,7 @@ export default function CartPage() {
               />
               <div>
                 <h3 className="font-bold">{item.productName}</h3>
-                <p className="text-sm text-gray-500">
-                  ${item.unitPrice.toFixed(2)}
-                </p>
+                <p className="text-sm text-gray-500">${item.unitPrice}</p>
               </div>
             </div>
 
@@ -122,7 +120,7 @@ export default function CartPage() {
                   size="icon"
                   className="h-8 w-8"
                   onClick={() =>
-                    handleUpdateQuantity(item.id, item.quantity - 1)
+                    handleUpdateQuantity(item.id!, item.quantity - 1)
                   }
                 >
                   <Minus className="w-4 h-4" />
@@ -135,7 +133,7 @@ export default function CartPage() {
                   size="icon"
                   className="h-8 w-8"
                   onClick={() =>
-                    handleUpdateQuantity(item.id, item.quantity + 1)
+                    handleUpdateQuantity(item.id!, item.quantity + 1)
                   }
                 >
                   <Plus className="w-4 h-4" />
@@ -143,17 +141,15 @@ export default function CartPage() {
               </div>
               <p className="font-bold w-20 text-right">
                 $
-                {(item.totalPrice || item.unitPrice * item.quantity).toFixed(
-                  2,
-                )}{" "}
+                {(item.totalPrice || item.unitPrice * item.quantity).toFixed(2)}
               </p>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => handleRemoveItem(item.id)}
+                onClick={() => handleRemoveItem(item.id!)}
               >
-                <Trash2 className="w-5 h-5" /> 
+                <Trash2 className="w-5 h-5" />
               </Button>
             </div>
           </div>
