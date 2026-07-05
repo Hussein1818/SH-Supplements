@@ -7,7 +7,9 @@ import { Zap, Timer, AlertCircle, ShoppingCart, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { useCartStore } from "@/src/components/store/cartStore";
+import { useAuthStore } from "@/src/components/store/authStore";
 import { formatPrice, normalizeImageUrl } from "@/src/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface FlashSaleProduct {
   id: string;
@@ -49,8 +51,19 @@ export default function FlashSalesPage() {
   };
 
   const addItem = useCartStore((state) => state.addItem);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const router = useRouter();
 
   const handleAddToCart = async (product: FlashSaleProduct) => {
+    if (!accessToken) {
+      toast.error("Please sign in to add products to your cart.", {
+        action: {
+          label: "Sign in",
+          onClick: () => router.push("/login"),
+        },
+      });
+      return;
+    }
     if (product.stockQuantity <= 0) return;
     const activePrice = product.discountPrice > 0 ? product.discountPrice : product.originalPrice;
     addItem({

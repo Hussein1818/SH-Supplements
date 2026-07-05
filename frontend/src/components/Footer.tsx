@@ -49,11 +49,12 @@ export const Footer = () => {
             <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label="SH Supplements home">
               <div className="relative flex items-center justify-center">
                 <Image
-                  src="/logo.png"
+                  src="/logo.png?v=2"
                   alt="SH Supplements Logo"
                   width={36}
                   height={36}
                   className="h-8 md:h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  unoptimized
                 />
               </div>
               <div className="flex flex-col leading-none">

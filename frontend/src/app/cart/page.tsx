@@ -28,15 +28,15 @@ function SkeletonCartItem() {
 
 // ─── Page ──────────────────────────────────────────────────────────────────
 export default function CartPage() {
-  const router      = useRouter();
+  const router = useRouter();
   const accessToken = useAuthStore((state) => state.accessToken);
 
-  const cartItems           = useCartStore((state) => state.items);
+  const cartItems = useCartStore((state) => state.items);
   const updateQuantityStore = useCartStore((state) => state.updateQuantity);
-  const removeItemStore     = useCartStore((state) => state.removeItem);
+  const removeItemStore = useCartStore((state) => state.removeItem);
 
   const [grandTotal, setGrandTotal] = useState(0);
-  const [isLoading,  setIsLoading]  = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // ── Data fetching (logic unchanged) ──────────────────────────────────────
   const fetchCart = useCallback(async () => {
@@ -53,7 +53,7 @@ export default function CartPage() {
   }, []);
 
   useEffect(() => {
-    if (!accessToken) { router.replace("/login"); return; }
+    if (!accessToken) { router.replace("/login?redirect=/cart"); return; }
     fetchCart();
   }, [accessToken, fetchCart]);
 
@@ -192,9 +192,9 @@ export default function CartPage() {
 
                 {/* Remove */}
                 <Button
-                  variant="ghost"
                   size="icon-sm"
-                  className="text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-xl flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all"
+                  variant="ghost"
+                  className="flex-shrink-0 rounded-xl text-stone-400 transition-colors hover:bg-red-50 hover:text-red-500"
                   onClick={() => handleRemoveItem(item.id!)}
                   aria-label={`Remove ${item.productName} from cart`}
                 >

@@ -23,6 +23,7 @@ import { useCartStore } from "@/src/components/store/cartStore";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/components/store/authStore";
 import { cn, formatPrice, normalizeImageUrl } from "@/src/lib/utils";
+import { useRouter } from "next/navigation";
 
 // ─── Types (unchanged) ─────────────────────────────────────────────────────
 interface Product {
@@ -60,6 +61,7 @@ function SkeletonProductCard() {
 export default function ProductsPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const addItem = useCartStore((state) => state.addItem);
+  const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [flashSales, setFlashSales] = useState<Product[]>([]);
@@ -126,6 +128,15 @@ export default function ProductsPage() {
   };
 
   const handleAddToCart = async (product: Product) => {
+    if (!accessToken) {
+      toast.error("Please sign in to add products to your cart.", {
+        action: {
+          label: "Sign in",
+          onClick: () => router.push("/login"),
+        },
+      });
+      return;
+    }
     const activePrice =
       product.discountPrice > 0 && product.discountPrice < product.price
         ? product.discountPrice
