@@ -7,7 +7,6 @@ import {
   MapPin,
   Eye,
   EyeOff,
-  LogOut,
   RefreshCw,
   Plus,
   Star,
@@ -28,7 +27,6 @@ import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/components/store/authStore";
 import { useRouter } from "next/navigation";
-import { useCartStore } from "@/src/components/store/cartStore";
 
 interface AddressData {
   id: string;
@@ -129,18 +127,6 @@ export default function SettingsPage() {
     }
   }
 
-  // 5. Log Out
-  async function handleLogOut() {
-    try {
-      await api.post("/Auth/revoke-token");
-      useCartStore.getState().clearCart();
-    } catch (error) {
-      console.error("Logout error", error);
-    } finally {
-      useAuthStore.getState().logout();
-      router.replace("/");
-    }
-  }
 
   if (!isClient || !accessToken) return null;
   const egyptianGovernorates = [
@@ -205,15 +191,7 @@ export default function SettingsPage() {
             </button>
           </div>
 
-          <div className="pt-2">
-            <Button
-              onClick={handleLogOut}
-              variant="outline"
-              className="w-full text-red-600 border-red-100 hover:bg-red-50 hover:text-red-700"
-            >
-              <LogOut className="h-4 w-4 mr-2" /> Log Out
-            </Button>
-          </div>
+
         </div>
 
         {/* Dynamic Content */}

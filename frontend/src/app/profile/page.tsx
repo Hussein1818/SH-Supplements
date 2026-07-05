@@ -5,7 +5,7 @@ import {
   User, ShieldCheck, Pencil, Save, X,
   Phone, Scale, Ruler, Target, MapPin,
   Wallet, Activity, CheckCircle2, Leaf,
-  Camera, Upload, Minus, Plus, RotateCcw, ZoomIn,
+  Camera, Upload, Minus, Plus, RotateCcw, ZoomIn, Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/src/components/store/authStore";
@@ -217,6 +217,51 @@ export default function ProfilePage() {
     e.target.value = "";
   };
 
+  // ── Remove photo handler ─────────────────────────────────────────────────
+  const handleRemovePhoto = async () => {
+    if (!editForm || !userData) return;
+    const updatedForm = {
+      ...editForm,
+      profileImageUrl: "",
+      ProfileImageUrl: "",
+    };
+    setEditForm(updatedForm);
+
+    if (!isEditing) {
+      setIsSaving(true);
+      try {
+        const payload = {
+          userId: userData.id,
+          firstName: updatedForm.firstName,
+          lastName: updatedForm.lastName,
+          phoneNumber: updatedForm.phoneNumber || "",
+          age: Number(updatedForm.age),
+          weight: Number(updatedForm.weight),
+          height: Number(updatedForm.height),
+          goal: Number(updatedForm.goal),
+          medicalConditions: updatedForm.medicalConditions || "",
+          profileImageUrl: "",
+          ProfileImageUrl: "",
+        };
+        await api.put("/User/profile", payload);
+        try {
+          const res = await api.get("/User/profile");
+          setUserData(res.data);
+          setEditForm(res.data);
+        } catch {
+          setUserData(updatedForm);
+        }
+        toast.success("Profile photo removed successfully!");
+      } catch {
+        toast.error("Failed to remove photo");
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      toast.info("Photo removed! Click 'Save' to apply changes.");
+    }
+  };
+
   // ── Save handler ─────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!editForm) return;
@@ -336,6 +381,20 @@ export default function ProfilePage() {
                     )}
                   </div>
 
+                  {/* Remove photo circular button */}
+                  {(isEditing ? (editForm.profileImageUrl || editForm.ProfileImageUrl) : (userData.profileImageUrl || userData.ProfileImageUrl)) && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      disabled={isSaving}
+                      className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 p-2 sm:p-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-md border-2 border-white transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 cursor-pointer disabled:opacity-50"
+                      aria-label="Remove profile photo"
+                      title="Remove profile photo"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
+                    </button>
+                  )}
+
                   {/* Camera edit button */}
                   <button
                     type="button"
@@ -363,6 +422,21 @@ export default function ProfilePage() {
                 <Badge variant="emerald" className="mt-2 font-semibold">
                   Verified Member
                 </Badge>
+
+                {/* Remove Photo text button */}
+                {(isEditing ? (editForm.profileImageUrl || editForm.ProfileImageUrl) : (userData.profileImageUrl || userData.ProfileImageUrl)) && (
+                  <div className="mt-3 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50 border border-red-200/60 shadow-xs hover:shadow-sm"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      Remove Photo
+                    </button>
+                  </div>
+                )}
 
                 {/* Wallet */}
                 <div className="mt-5 pt-5 border-t border-stone-100">
