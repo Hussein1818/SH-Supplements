@@ -68,7 +68,8 @@ export default function SingleProductPage() {
 
     addItem({
       id: product.id,
-      ProductName: product.name,
+      productId: product.id,
+      productName: product.name,
       unitPrice: activePrice,
       quantity: 1,
       productImageUrl: mainImg,

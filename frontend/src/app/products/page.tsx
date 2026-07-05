@@ -47,7 +47,7 @@ export default function ProductsPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isMoreLoading, setIsMoreLoading] = useState(false);
-  const PAGE_SIZE = 8; 
+  const PAGE_SIZE = 8;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedBrand, setSelectedBrand] = useState("All");
@@ -126,13 +126,13 @@ export default function ProductsPage() {
         : product.price;
 
     addItem({
-      id: product.id,
-      name: product.name,
-      price: activePrice,
+      id: String(product.id),
+      productId: String(product.id),
+      productName: product.name,
+      unitPrice: activePrice,
       quantity: 1,
-      imageUrl: product.mainImageUrl,
+      productImageUrl: product.mainImageUrl,
     });
-
     try {
       await api.post("/carts/add", {
         productId: product.id,

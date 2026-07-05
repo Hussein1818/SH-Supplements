@@ -73,14 +73,7 @@ export const Footer = () => {
                   Flash Sales
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/offers"
-                  className="hover:text-[#FF6600] transition-colors"
-                >
-                  Special Offers
-                </Link>
-              </li>
+              <li></li>
             </ul>
           </div>
 
@@ -90,38 +83,10 @@ export const Footer = () => {
               Support
             </h4>
             <ul className="space-y-3 text-sm font-medium">
-              <li>
-                <Link
-                  href="/contact"
-                  className="hover:text-[#FF6600] transition-colors"
-                >
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/faq"
-                  className="hover:text-[#FF6600] transition-colors"
-                >
-                  FAQs
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/shipping"
-                  className="hover:text-[#FF6600] transition-colors"
-                >
-                  Shipping & Returns
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/track-order"
-                  className="hover:text-[#FF6600] transition-colors"
-                >
-                  Track Order
-                </Link>
-              </li>
+              <li>Contact Us</li>
+              <li></li>
+              <li></li>
+              <li></li>
             </ul>
           </div>
 

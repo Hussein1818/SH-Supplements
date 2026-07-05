@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/src/components/store/cartStore";
 
 interface AddressData {
+  id: string;
   street: string;
   city: string;
   state: string;
