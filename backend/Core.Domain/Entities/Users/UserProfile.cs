@@ -11,7 +11,7 @@ public class UserProfile : BaseEntity
     public string LastName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
 
-    
+    public string? ProfileImageUrl { get; set; }
     public int Age { get; set; }
     public decimal Weight { get; set; }
     public decimal Height { get; set; }
