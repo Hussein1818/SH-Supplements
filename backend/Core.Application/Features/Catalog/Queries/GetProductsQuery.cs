@@ -65,25 +65,25 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<Pr
         {
             query = query.Where(p => p.Price <= request.MaxPrice.Value);
         }
-
         var pagedProducts = query
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .Select(p => new ProductListDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price,
-                DiscountPrice = p.DiscountPrice,
-                Goal = p.Goal,
-                CategoryName = p.Category != null ? p.Category.Name : string.Empty,
-                BrandName = p.Brand != null ? p.Brand.Name : string.Empty,
-                AverageRating = p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0,
-                MainImageUrl = p.Images.Where(i => i.IsMainImage).Select(i => i.ImageUrl).FirstOrDefault() ?? string.Empty,
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(p => new ProductListDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Price = p.Price,
+                        DiscountPrice = p.DiscountPrice,
+                        Goal = p.Goal,
+                        CategoryName = p.Category != null ? p.Category.Name : string.Empty,
+                        BrandName = p.Brand != null ? p.Brand.Name : string.Empty,
+                        AverageRating = p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0,
+                        MainImageUrl = p.Images.Where(i => i.IsMainImage).Select(i => i.ImageUrl).FirstOrDefault() ?? string.Empty,
 
-                InStock = p.StockQuantity > 0
-            })
-            .ToList();
+                        InStock = p.StockQuantity > 0
+                    })
+                    .ToList();
 
         return Task.FromResult(pagedProducts);
     }
