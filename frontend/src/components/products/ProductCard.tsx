@@ -15,11 +15,12 @@ export const ProductCard = ({ product }: { product: any }) => {
   const handleAddToCart = async () => {
     try {
       addItem({
-        id: product.id,
-        name: product.name,
-        price: product.price,
+        id: String(product.id),
+        productId: String(product.id),
+        productName: product.name,
+        unitPrice: product.price,
         quantity: 1,
-        imageUrl: product.mainImageUrl,
+        productImageUrl: product.mainImageUrl,
       });
       await api.post("/Carts/add", {
         productId: product.id,

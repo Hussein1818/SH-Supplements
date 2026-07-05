@@ -24,22 +24,22 @@ export const OrderSummary = () => {
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
         {items.map((item) => (
           <div
-            key={item.id}
+            key={item.productId}
             className="flex gap-4 items-center bg-white p-3 rounded-xl border border-gray-100"
           >
             <img
-              src={item.imageUrl || "/placeholder.png"}
-              alt={item.name}
+              src={item.productImageUrl || "/placeholder.png"}
+              alt={item.productName}
               className="w-16 h-16 object-cover rounded-lg border border-gray-100"
             />
             <div className="flex-1">
               <p className="font-bold text-sm text-gray-900 line-clamp-2">
-                {item.name}
+                {item.productName}
               </p>
               <p className="text-xs text-gray-500 mt-1">Qty: {item.quantity}</p>
             </div>
             <p className="font-black text-sm text-gray-900">
-              ${(item.price * item.quantity).toFixed(2)}
+              ${(item.unitPrice * item.quantity).toFixed(2)}
             </p>
           </div>
         ))}
