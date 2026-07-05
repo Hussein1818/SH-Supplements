@@ -23,30 +23,45 @@ public static class DataSeeder
         }
 
         var admin1Email = configuration["AdminCredentials:Admin1:Email"];
+        var admin1UserName = configuration["AdminCredentials:Admin1:UserName"];
         var admin1Password = configuration["AdminCredentials:Admin1:Password"];
-        if (!string.IsNullOrEmpty(admin1Email) && !string.IsNullOrEmpty(admin1Password))
-            await CreateAdminIfNotExists(userManager, admin1Email, admin1Password);
+
+        if (!string.IsNullOrEmpty(admin1Email) && !string.IsNullOrEmpty(admin1Password) && !string.IsNullOrEmpty(admin1UserName))
+            await CreateOrUpdateAdminAsync(userManager, admin1Email, admin1UserName, admin1Password);
 
         var admin2Email = configuration["AdminCredentials:Admin2:Email"];
+        var admin2UserName = configuration["AdminCredentials:Admin2:UserName"];
         var admin2Password = configuration["AdminCredentials:Admin2:Password"];
-        if (!string.IsNullOrEmpty(admin2Email) && !string.IsNullOrEmpty(admin2Password))
-            await CreateAdminIfNotExists(userManager, admin2Email, admin2Password);
+
+        if (!string.IsNullOrEmpty(admin2Email) && !string.IsNullOrEmpty(admin2Password) && !string.IsNullOrEmpty(admin2UserName))
+            await CreateOrUpdateAdminAsync(userManager, admin2Email, admin2UserName, admin2Password);
     }
 
-    private static async Task CreateAdminIfNotExists(UserManager<ApplicationUser> userManager, string email, string password)
+    private static async Task CreateOrUpdateAdminAsync(UserManager<ApplicationUser> userManager, string email, string userName, string password)
     {
-        if (await userManager.FindByEmailAsync(email) == null)
+        var existingAdmin = await userManager.FindByEmailAsync(email);
+
+        if (existingAdmin == null)
         {
             var admin = new ApplicationUser
             {
-                UserName = email,
+                UserName = userName,
                 Email = email,
                 EmailConfirmed = true
             };
+
             var result = await userManager.CreateAsync(admin, password);
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(admin, "Admin");
+            }
+        }
+        else
+        {
+            if (existingAdmin.UserName != userName)
+            {
+                existingAdmin.UserName = userName;
+                await userManager.UpdateAsync(existingAdmin);
             }
         }
     }
