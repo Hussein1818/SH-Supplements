@@ -333,13 +333,6 @@ export default function Home() {
           Shop by Category
         </h2>
       </div>
-      <Link
-        href="/categories"
-        className="hidden sm:flex items-center gap-1 text-sm font-semibold text-stone-600 hover:text-emerald-600 transition-colors"
-        aria-label="View all categories"
-      >
-        View all <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-      </Link>
     </div>
 
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

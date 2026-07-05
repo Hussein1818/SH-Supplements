@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -19,11 +19,13 @@ import {
   Settings,
   BadgeCheck,
   Leaf,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
-import { cn } from "@/src/lib/utils";
+import { cn, normalizeImageUrl } from "@/src/lib/utils";
 import { useCartStore } from "@/src/components/store/cartStore";
 import { useAuthStore } from "@/src/components/store/authStore";
+import { api } from "@/src/components/auth/axiosInstance";
 
 const NAV_ITEMS = [
   { name: "Home", href: "/", icon: Home },
@@ -51,6 +53,97 @@ export default function Navbar() {
   const [cartCount, setCartCount] = useState(0);
   const [prevCount, setPrevCount] = useState(0);
   const [badgeAnimate, setBadgeAnimate] = useState(false);
+
+  const router = useRouter();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    firstName?: string;
+    lastName?: string;
+    profileImageUrl?: string;
+    ProfileImageUrl?: string;
+  } | null>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user profile when logged in
+  useEffect(() => {
+    if (accessToken) {
+      api
+        .get("/User/profile")
+        .then((res) => setUserProfile(res.data))
+        .catch(() => {});
+    } else {
+      setUserProfile(null);
+    }
+  }, [accessToken]);
+
+  // Profile dropdown click outside and keyboard navigation
+  useEffect(() => {
+    if (!isProfileOpen) return;
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsProfileOpen(false);
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const items = profileDropdownRef.current?.querySelectorAll<HTMLElement>(
+          '[role="menuitem"]'
+        );
+        if (!items || items.length === 0) return;
+        const index = Array.from(items).indexOf(
+          document.activeElement as HTMLElement
+        );
+        let nextIndex = 0;
+        if (e.key === "ArrowDown") {
+          nextIndex = index < items.length - 1 ? index + 1 : 0;
+        } else {
+          nextIndex = index > 0 ? index - 1 : items.length - 1;
+        }
+        items[nextIndex]?.focus();
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isProfileOpen]);
+
+  // Logout modal Escape key support
+  useEffect(() => {
+    if (!isLogoutModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsLogoutModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLogoutModalOpen]);
+
+  // Existing Log Out logic relocated
+  async function handleLogOut() {
+    try {
+      await api.post("/Auth/revoke-token");
+      useCartStore.getState().clearCart();
+    } catch (error) {
+      console.error("Logout error", error);
+    } finally {
+      useAuthStore.getState().logout();
+      router.replace("/");
+    }
+  }
+
 
   // Cart count sync
   useEffect(() => {
@@ -174,13 +267,117 @@ export default function Navbar() {
               </Link>
             </Button>
 
-            {/* Auth */}
+            {/* Auth Profile Dropdown */}
             {accessToken ? (
-              <Button variant="ghost" size="icon" asChild className="hidden sm:flex h-11 w-11 rounded-xl">
-                <Link href="/profile" aria-label="Your profile">
-                  <User className="h-5 w-5 sm:h-6 sm:w-6 text-stone-800" aria-hidden="true" />
-                </Link>
-              </Button>
+              <div className="relative hidden sm:block" ref={profileDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                  className={cn(
+                    "flex items-center gap-2 p-1 pl-2 pr-3 rounded-2xl transition-all duration-200 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/30",
+                    isProfileOpen
+                      ? "bg-stone-100 border-stone-200 shadow-sm"
+                      : "bg-transparent border-transparent hover:bg-stone-50 hover:border-stone-100"
+                  )}
+                  aria-label="User profile menu"
+                  aria-expanded={isProfileOpen}
+                  aria-haspopup="true"
+                >
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-500 p-[2px] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <div className="h-full w-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                      {(userProfile?.profileImageUrl || userProfile?.ProfileImageUrl) ? (
+                        <img
+                          src={normalizeImageUrl(userProfile.profileImageUrl || userProfile.ProfileImageUrl || "")}
+                          alt="Profile avatar"
+                          className="h-full w-full object-cover rounded-full aspect-square"
+                        />
+                      ) : (
+                        <User className="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                      )}
+                    </div>
+                  </div>
+                  <span className="font-bold text-sm text-stone-800 max-w-[110px] truncate">
+                    {userProfile?.firstName || "Account"}
+                  </span>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isProfileOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Profile options"
+                    className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-stone-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-150 transform origin-top-right"
+                  >
+                    <div className="px-4 py-3 border-b border-stone-100 mb-1">
+                      <p className="font-extrabold text-stone-900 text-sm truncate">
+                        {userProfile ? `${userProfile.firstName || ""} ${userProfile.lastName || ""}`.trim() || "My Account" : "My Account"}
+                      </p>
+                      <p className="text-xs text-stone-400 font-semibold mt-0.5">Verified Member</p>
+                    </div>
+
+                    <div className="px-1.5 space-y-0.5">
+                      <Link
+                        href="/profile"
+                        role="menuitem"
+                        tabIndex={0}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-stone-700 hover:bg-stone-50 hover:text-emerald-600 transition-colors focus:bg-stone-50 focus:text-emerald-600 focus:outline-none"
+                      >
+                        <User className="h-4 w-4 text-stone-400" aria-hidden="true" />
+                        Profile
+                      </Link>
+                      <Link
+                        href="/orders"
+                        role="menuitem"
+                        tabIndex={0}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-stone-700 hover:bg-stone-50 hover:text-emerald-600 transition-colors focus:bg-stone-50 focus:text-emerald-600 focus:outline-none"
+                      >
+                        <ShoppingBag className="h-4 w-4 text-stone-400" aria-hidden="true" />
+                        Orders
+                      </Link>
+                      <Link
+                        href="/progress"
+                        role="menuitem"
+                        tabIndex={0}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-stone-700 hover:bg-stone-50 hover:text-emerald-600 transition-colors focus:bg-stone-50 focus:text-emerald-600 focus:outline-none"
+                      >
+                        <TrendingUp className="h-4 w-4 text-stone-400" aria-hidden="true" />
+                        Progress
+                      </Link>
+                      <Link
+                        href="/settings"
+                        role="menuitem"
+                        tabIndex={0}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-stone-700 hover:bg-stone-50 hover:text-emerald-600 transition-colors focus:bg-stone-50 focus:text-emerald-600 focus:outline-none"
+                      >
+                        <Settings className="h-4 w-4 text-stone-400" aria-hidden="true" />
+                        Settings
+                      </Link>
+                    </div>
+
+                    <div className="my-1.5 border-t border-stone-100" role="separator" />
+
+                    <div className="px-1.5">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        tabIndex={0}
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          setIsLogoutModalOpen(true);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors focus:bg-red-50 focus:text-red-700 focus:outline-none cursor-pointer text-left"
+                      >
+                        <LogOut className="h-4 w-4 text-red-500 flex-shrink-0" aria-hidden="true" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <Button
                 asChild
@@ -311,19 +508,42 @@ export default function Navbar() {
         {/* Sidebar Footer */}
         <div className="p-6 border-t border-white/10">
           {accessToken ? (
-            <Link
-              href="/profile"
-              className="flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-white/10 transition-colors group"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <div className="h-10 w-10 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                <User className="h-5 w-5 text-emerald-400" aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold text-white truncate">My Account</p>
-                <p className="text-xs text-stone-400">View profile</p>
-              </div>
-            </Link>
+            <div className="space-y-2">
+              <Link
+                href="/profile"
+                className="flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-white/10 transition-colors group"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <div className="h-10 w-10 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {(userProfile?.profileImageUrl || userProfile?.ProfileImageUrl) ? (
+                    <img
+                      src={normalizeImageUrl(userProfile.profileImageUrl || userProfile.ProfileImageUrl || "")}
+                      alt="Profile avatar"
+                      className="h-full w-full object-cover rounded-full aspect-square"
+                    />
+                  ) : (
+                    <User className="h-5 w-5 text-emerald-400" aria-hidden="true" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-bold text-white truncate">
+                    {userProfile ? `${userProfile.firstName || ""} ${userProfile.lastName || ""}`.trim() || "My Account" : "My Account"}
+                  </p>
+                  <p className="text-xs text-stone-400">View profile</p>
+                </div>
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  setIsLogoutModalOpen(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-sm transition-colors cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                Logout
+              </button>
+            </div>
           ) : (
             <div className="space-y-2.5">
               <Button asChild variant="primary" className="w-full h-11 text-base font-bold rounded-xl" size="default">
@@ -340,6 +560,59 @@ export default function Navbar() {
           )}
         </div>
       </aside>
+
+      {/* ── Logout Confirmation Dialog ──────────────────────────────────── */}
+      {isLogoutModalOpen && (
+        <div
+          className="fixed inset-0 z-[100] bg-stone-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-dialog-title"
+          aria-describedby="logout-dialog-description"
+          onClick={() => setIsLogoutModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden border border-stone-100 p-6 space-y-6 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 shadow-inner">
+                <LogOut className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <div className="space-y-1">
+                <h3 id="logout-dialog-title" className="font-black text-stone-900 text-xl tracking-tight">
+                  Sign out?
+                </h3>
+                <p id="logout-dialog-description" className="text-stone-500 text-sm font-medium">
+                  Are you sure you want to sign out of your account?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-11 rounded-xl font-bold border-stone-200 text-stone-700 hover:bg-stone-50"
+                onClick={() => setIsLogoutModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                className="flex-1 h-11 rounded-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20"
+                onClick={() => {
+                  setIsLogoutModalOpen(false);
+                  handleLogOut();
+                }}
+              >
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
