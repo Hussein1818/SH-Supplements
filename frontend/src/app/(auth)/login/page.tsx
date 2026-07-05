@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Lock, User, Eye, EyeOff, Leaf, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { Lock, User, Eye, EyeOff, Leaf, ArrowRight, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
@@ -19,6 +20,8 @@ export default function Login() {
   const [formData, setFormData] = useState({ usernameOrEmail: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [unverifiedError, setUnverifiedError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loginStore = useAuthStore((state) => state.login);
   const router     = useRouter();
@@ -28,6 +31,8 @@ export default function Login() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      setUnverifiedError(false);
+      setErrorMessage(null);
       const response = await axios.post(
         `${BASE_URL}/Auth/login`,
         { usernameOrEmail: formData.usernameOrEmail, password: formData.password },
@@ -39,8 +44,23 @@ export default function Login() {
       router.push("/");
       toast.success("Welcome back!");
     } catch (error: any) {
-      const errorMessage = error.response?.data?.Message || error.message || "Login failed";
-      toast.error(errorMessage);
+      const rawMsg = (error.response?.data?.Message || error.response?.data || error.message || "").toString();
+      const lowerMsg = rawMsg.toLowerCase();
+      const isUnverified =
+        lowerMsg.includes("confirm") ||
+        lowerMsg.includes("verif") ||
+        lowerMsg.includes("unconfirmed") ||
+        lowerMsg.includes("unverified") ||
+        lowerMsg.includes("not active");
+
+      if (isUnverified) {
+        setUnverifiedError(true);
+        toast.error("Please verify your email address before signing in.");
+      } else {
+        const displayMsg = rawMsg || "Login failed. Please check your credentials and try again.";
+        setErrorMessage(displayMsg);
+        toast.error(displayMsg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -62,9 +82,14 @@ export default function Login() {
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-emerald-600 flex items-center justify-center">
-            <Leaf className="h-5 w-5 text-white" aria-hidden="true" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="SH Supplements Logo"
+            width={40}
+            height={40}
+            className="h-10 w-auto object-contain"
+            priority
+          />
           <div>
             <span className="font-bold text-white text-sm">SH<span className="text-emerald-400">Supplements</span></span>
             <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">Premium Nutrition</p>
@@ -107,12 +132,19 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md space-y-8 animate-fade-up">
 
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center">
-              <Leaf className="h-4 w-4 text-white" aria-hidden="true" />
-            </div>
-            <span className="font-bold text-stone-900 text-sm">SH<span className="text-emerald-600">Supplements</span></span>
+          {/* Logo above form */}
+          <div className="flex items-center justify-center gap-2.5 mb-6">
+            <Image
+              src="/logo.png"
+              alt="SH Supplements Logo"
+              width={44}
+              height={44}
+              className="h-10 sm:h-11 w-auto object-contain"
+              priority
+            />
+            <span className="font-extrabold text-stone-900 text-lg sm:text-xl tracking-tight">
+              SH<span className="text-emerald-600">Supplements</span>
+            </span>
           </div>
 
           {/* Header */}
@@ -125,6 +157,43 @@ export default function Login() {
               </Link>
             </p>
           </div>
+
+          {/* Unverified Email Alert */}
+          {unverifiedError && (
+            <div className="p-4 bg-amber-50 border border-amber-200/80 rounded-2xl space-y-3 animate-fade-up shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-amber-900">
+                    Email verification required
+                  </h3>
+                  <p className="text-xs font-medium text-amber-800 leading-relaxed">
+                    Your email address has not been verified yet. Please check your inbox and click the verification link before signing in.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2.5 border-t border-amber-200/60 flex items-center justify-between text-xs">
+                <span className="text-amber-700">Didn&apos;t receive the link?</span>
+                <Link
+                  href="/resend-confirm-email"
+                  className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
+                >
+                  <RefreshCw className="h-3 w-3" aria-hidden="true" />
+                  Resend confirmation email
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Generic Login Error Alert */}
+          {errorMessage && !unverifiedError && (
+            <div className="p-3.5 bg-red-50 border border-red-200/80 rounded-2xl flex items-center gap-3 text-xs font-medium text-red-700 animate-fade-up shadow-sm">
+              <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" aria-hidden="true" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
           {/* Form */}
           <form className="space-y-5" onSubmit={handleLoginSubmit} noValidate>

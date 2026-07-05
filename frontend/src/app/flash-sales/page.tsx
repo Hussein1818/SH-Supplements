@@ -7,6 +7,7 @@ import { Zap, Timer, AlertCircle, ShoppingCart, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { useCartStore } from "@/src/components/store/cartStore";
+import { formatPrice, normalizeImageUrl } from "@/src/lib/utils";
 
 interface FlashSaleProduct {
   id: string;
@@ -113,7 +114,7 @@ export default function FlashSalesPage() {
                 </div>
 
                 <img
-                  src={product.imageUrl || "/placeholder.png"}
+                  src={normalizeImageUrl(product.imageUrl) || "/placeholder.png"}
                   alt={product.name}
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                 />
@@ -126,10 +127,10 @@ export default function FlashSalesPage() {
 
                 <div className="flex items-end gap-2">
                   <span className="text-2xl font-black text-red-600">
-                    ${product.discountPrice.toFixed(2)}
+                    {formatPrice(product.discountPrice)}
                   </span>
                   <span className="text-sm font-semibold text-gray-400 line-through mb-1">
-                    ${product.originalPrice.toFixed(2)}
+                    {formatPrice(product.originalPrice)}
                   </span>
                 </div>
 

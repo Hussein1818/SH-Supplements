@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -15,6 +16,7 @@ import {
   Pill,
   Heart,
   Droplet,
+  Flame,
 } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
@@ -22,7 +24,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { ProductCard } from "@/src/components/products/ProductCard";
-import { cn } from "@/src/lib/utils";
+import { cn, formatPrice, normalizeImageUrl, getCategoryImageUrl } from "@/src/lib/utils";
 import { useCartStore } from "@/src/components/store/cartStore";
 
 const getCategoryIcon = (categoryName: string) => {
@@ -41,6 +43,9 @@ const getCategoryIcon = (categoryName: string) => {
   }
   if (nameLower.includes("pill") || nameLower.includes("capsule") || nameLower.includes("supplement")) {
     return Pill;
+  }
+  if (nameLower.includes("fat") || nameLower.includes("loss") || nameLower.includes("burn") || nameLower.includes("shred")) {
+    return Flame;
   }
   return Package;
 };
@@ -108,7 +113,7 @@ export default function Home() {
           .catch(() => console.warn("No flash sales found."));
 
         api.get("/Categories")
-          .then((res) => setCategories(res.data?.slice(0, 3) || []))
+          .then((res) => setCategories(res.data?.slice(0, 7) || []))
           .catch(() => console.warn("No categories found."));
 
         api.get("/Products", { params: { pageNumber: 1, pageSize: 8 } })
@@ -136,7 +141,7 @@ export default function Home() {
       productName: product.name,
       unitPrice: activePrice,
       quantity: 1,
-      productImageUrl: product.imageUrl || "",
+      productImageUrl: normalizeImageUrl(product.imageUrl) || "",
     });
     try {
       await api.post("/Carts/add", { productId: product.id, quantity: 1 });
@@ -223,9 +228,12 @@ export default function Home() {
 
           {/* Content */}
           <div className="relative z-10 p-8 md:p-14 max-w-2xl animate-fade-up">
-            <Badge variant="glass" className="mb-5 text-white border-white/30 text-xs font-semibold tracking-wide">
-              <Leaf className="h-3 w-3 text-emerald-300" aria-hidden="true" />
-              Science-Backed Nutrition
+            <Badge
+              variant="outline"
+              className="mb-5 flex w-fit items-center gap-1.5 rounded-full border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-zinc-200 backdrop-blur-md transition-colors hover:bg-white/10"
+            >
+              <Leaf className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+              <span>Science-Backed Nutrition</span>
             </Badge>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.05] mb-4">
@@ -321,41 +329,57 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {categories.map((category, index) => {
               const Icon = getCategoryIcon(category.name);
+              const imageUrl = getCategoryImageUrl(category.name, index);
               return (
                 <Link
                   key={category.id}
                   href={`/categories/${category.id}`}
                   className={cn(
-                    "relative rounded-3xl overflow-hidden group block cursor-pointer p-6",
-                    "bg-white border border-stone-200 shadow-sm hover:shadow-md hover:-translate-y-0.5",
-                    "transition-all duration-300 flex flex-col justify-between min-h-[180px] md:min-h-[200px]"
+                    "relative rounded-3xl overflow-hidden group block cursor-pointer",
+                    "border border-stone-200/80 shadow-md hover:shadow-xl hover:-translate-y-1",
+                    "transition-all duration-500 flex flex-col justify-end min-h-[260px] sm:min-h-[280px]"
                   )}
                   aria-label={`Browse ${category.name}`}
                 >
-                  {/* Icon badge */}
-                  <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center group-hover:bg-emerald-600 group-hover:border-emerald-600 transition-all duration-300">
-                    <Icon
-                      className="h-6 w-6 text-emerald-600 group-hover:text-white transition-colors duration-300"
-                      aria-hidden="true"
+                  {/* Background Image with slight zoom on hover */}
+                  <div className="absolute inset-0 z-0 overflow-hidden bg-stone-900">
+                    <Image
+                      src={imageUrl}
+                      alt={category.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
                     />
+                    {/* Soft dark gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent transition-opacity duration-500 group-hover:opacity-90" />
+                  </div>
+
+                  {/* Top Badge / Icon */}
+                  <div className="absolute top-5 left-5 z-10">
+                    <div className="h-11 w-11 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center group-hover:bg-emerald-600 group-hover:border-emerald-500 transition-all duration-300 shadow-sm">
+                      <Icon
+                        className="h-5 w-5 text-white transition-colors duration-300"
+                        aria-hidden="true"
+                      />
+                    </div>
                   </div>
 
                   {/* Content */}
-                  <div className="mt-6 flex items-end justify-between gap-3">
+                  <div className="relative z-10 p-6 flex items-end justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="text-lg font-black text-stone-900 mb-1">
+                      <h3 className="text-xl font-black text-white mb-1 tracking-tight group-hover:text-emerald-300 transition-colors duration-300">
                         {category.name}
                       </h3>
-                      <p className="text-xs text-stone-500 line-clamp-1">
-                        {category.description}
+                      <p className="text-xs font-medium text-stone-200/90 line-clamp-2 leading-relaxed">
+                        {category.description || `Explore our premium ${category.name} collection.`}
                       </p>
                     </div>
-                    <div className="h-8 w-8 rounded-full bg-stone-100 group-hover:bg-emerald-600 flex items-center justify-center transition-all duration-200 flex-shrink-0">
+                    <div className="h-9 w-9 rounded-full bg-white/20 backdrop-blur-md border border-white/30 group-hover:bg-emerald-600 group-hover:border-emerald-600 flex items-center justify-center transition-all duration-300 flex-shrink-0 shadow-sm group-hover:scale-105">
                       <ArrowRight
-                        className="h-3.5 w-3.5 text-stone-600 group-hover:text-white transition-colors duration-200"
+                        className="h-4 w-4 text-white transition-transform duration-300 group-hover:translate-x-0.5"
                         aria-hidden="true"
                       />
                     </div>
@@ -467,7 +491,7 @@ export default function Home() {
                       -{product.savingsPercentage.toFixed(0)}%
                     </Badge>
                     <img
-                      src={product.imageUrl || "/placeholder.png"}
+                      src={normalizeImageUrl(product.imageUrl) || "/placeholder.png"}
                       alt={product.name}
                       loading="lazy"
                       className="h-full object-contain mix-blend-luminosity group-hover:scale-105 transition-transform duration-300"
@@ -483,10 +507,10 @@ export default function Home() {
                     {/* Prices */}
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-black text-orange-400">
-                        ${product.discountPrice.toFixed(2)}
+                        {formatPrice(product.discountPrice)}
                       </span>
                       <span className="text-xs text-stone-500 line-through">
-                        ${product.originalPrice.toFixed(2)}
+                        {formatPrice(product.originalPrice)}
                       </span>
                     </div>
 

@@ -22,7 +22,7 @@ import {
 import { useCartStore } from "@/src/components/store/cartStore";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/components/store/authStore";
-import { cn } from "@/src/lib/utils";
+import { cn, formatPrice, normalizeImageUrl } from "@/src/lib/utils";
 
 // ─── Types (unchanged) ─────────────────────────────────────────────────────
 interface Product {
@@ -222,7 +222,7 @@ export default function ProductsPage() {
         <div className="relative aspect-square bg-stone-50 overflow-hidden">
           {product.mainImageUrl ? (
             <img
-              src={product.mainImageUrl}
+              src={normalizeImageUrl(product.mainImageUrl)}
               alt={product.name}
               loading="lazy"
               className="w-full h-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-400"
@@ -270,10 +270,10 @@ export default function ProductsPage() {
           <div className="flex items-center justify-between mt-auto pt-3 border-t border-stone-100">
             <div className="flex flex-col">
               <span className="text-base font-black text-stone-900">
-                ${hasDiscount ? product.discountPrice : product.price}
+                {formatPrice(hasDiscount ? product.discountPrice : product.price)}
               </span>
               {hasDiscount && (
-                <span className="text-xs text-stone-400 line-through">${product.price}</span>
+                <span className="text-xs text-stone-400 line-through">{formatPrice(product.price)}</span>
               )}
             </div>
 

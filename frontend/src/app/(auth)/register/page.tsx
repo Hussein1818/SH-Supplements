@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, User, Check, X, Leaf, ArrowRight } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -42,7 +43,7 @@ export default function Register() {
         response.data?.Message ||
         "Account created! Please check your email to confirm your account.";
       toast.success(successMessage);
-      router.push("/confirm-email");
+      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (error: any) {
       const serverResponse = error.response?.data;
       if (serverResponse?.Message)       toast.error(serverResponse.Message);
@@ -71,9 +72,14 @@ export default function Register() {
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-emerald-600 flex items-center justify-center">
-            <Leaf className="h-5 w-5 text-white" aria-hidden="true" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="SH Supplements Logo"
+            width={40}
+            height={40}
+            className="h-10 w-auto object-contain"
+            priority
+          />
           <div>
             <span className="font-bold text-white text-sm">SH<span className="text-emerald-400">Supplements</span></span>
             <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">Premium Nutrition</p>
@@ -109,12 +115,19 @@ export default function Register() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 overflow-y-auto">
         <div className="w-full max-w-md space-y-7 animate-fade-up">
 
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center">
-              <Leaf className="h-4 w-4 text-white" aria-hidden="true" />
-            </div>
-            <span className="font-bold text-stone-900 text-sm">SH<span className="text-emerald-600">Supplements</span></span>
+          {/* Logo above form */}
+          <div className="flex items-center justify-center gap-2.5 mb-6">
+            <Image
+              src="/logo.png"
+              alt="SH Supplements Logo"
+              width={44}
+              height={44}
+              className="h-10 sm:h-11 w-auto object-contain"
+              priority
+            />
+            <span className="font-extrabold text-stone-900 text-lg sm:text-xl tracking-tight">
+              SH<span className="text-emerald-600">Supplements</span>
+            </span>
           </div>
 
           <div>

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api } from "../auth/axiosInstance";
+import { normalizeImageUrl } from "@/src/lib/utils";
 
 export interface CartItem {
   id?: string;
@@ -60,7 +61,11 @@ export const useCartStore = create<CartStore>((set) => ({
   fetchCart: async () => {
     try {
       const response = await api.get("/Carts/my-cart");
-      set({ items: response.data?.items || [] });
+      const items = (response.data?.items || []).map((item: any) => ({
+        ...item,
+        productImageUrl: normalizeImageUrl(item.productImageUrl),
+      }));
+      set({ items });
     } catch (error) {
       console.error("Failed to fetch cart:", error);
     }

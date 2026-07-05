@@ -8,7 +8,7 @@ import { useCartStore } from "@/src/components/store/cartStore";
 import { toast } from "sonner";
 import { api } from "../auth/axiosInstance";
 import { useState } from "react";
-import { cn } from "@/src/lib/utils";
+import { cn, formatPrice, normalizeImageUrl } from "@/src/lib/utils";
 
 interface ProductCardProduct {
   id: string | number;
@@ -96,7 +96,7 @@ export const ProductCard = ({ product, isRecommended = false, className }: Produ
       <div className="relative aspect-square bg-stone-50 overflow-hidden">
         {product.mainImageUrl ? (
           <img
-            src={product.mainImageUrl}
+            src={normalizeImageUrl(product.mainImageUrl)}
             alt={product.name}
             loading="lazy"
             className="w-full h-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-400 ease-out"
@@ -200,11 +200,11 @@ export const ProductCard = ({ product, isRecommended = false, className }: Produ
           {/* Price */}
           <div className="flex flex-col">
             <span className="text-base font-black text-stone-900">
-              ${activePrice.toFixed(2)}
+              {formatPrice(activePrice)}
             </span>
             {hasDiscount && (
               <span className="text-xs text-stone-400 line-through leading-none">
-                ${product.price.toFixed(2)}
+                {formatPrice(product.price)}
               </span>
             )}
           </div>
