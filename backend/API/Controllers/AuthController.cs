@@ -48,7 +48,11 @@ public class AuthController : ControllerBase
 
         SetRefreshTokenCookie(authResponse.RefreshToken);
 
-        return Ok(new { Token = authResponse.Token });
+        return Ok(new
+        {
+            Token = authResponse.Token,
+            Roles = authResponse.Roles
+        });
     }
 
     [HttpGet("confirm-email")]
@@ -77,7 +81,11 @@ public class AuthController : ControllerBase
 
         SetRefreshTokenCookie(authResponse.RefreshToken);
 
-        return Ok(new { Token = authResponse.Token });
+        return Ok(new
+        {
+            Token = authResponse.Token,
+            Roles = authResponse.Roles
+        });
     }
 
     [Authorize]
