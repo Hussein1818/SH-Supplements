@@ -1,4 +1,5 @@
 ﻿using Core.Application.Features.Sales.Commands;
+using Core.Application.Features.Sales.Queries;
 using Core.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -40,5 +41,12 @@ public class ReturnsController : ControllerBase
     {
         await _mediator.Send(command);
         return Ok(new { Message = "Return status updated successfully." });
+    }
+    [HttpGet("all")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> GetAllReturns([FromQuery] GetAllReturnRequestsQuery query)
+    {
+        var returns = await _mediator.Send(query);
+        return Ok(returns);
     }
 }

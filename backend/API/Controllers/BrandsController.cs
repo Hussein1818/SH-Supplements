@@ -25,4 +25,20 @@ public class BrandsController : ControllerBase
         var brandId = await _mediator.Send(command);
         return Ok(new { Message = "Brand created successfully.", BrandId = brandId });
     }
+    [Authorize(Roles = Roles.Admin)]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBrandCommand command)
+    {
+        command.Id = id;
+        await _mediator.Send(command);
+        return Ok(new { Message = "Brand updated successfully." });
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        await _mediator.Send(new DeleteBrandCommand { Id = id });
+        return Ok(new { Message = "Brand deleted successfully." });
+    }
 }

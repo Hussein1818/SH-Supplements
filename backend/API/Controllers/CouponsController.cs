@@ -36,4 +36,19 @@ public class CouponsController : ControllerBase
 
         return Ok(couponDto);
     }
+    [Authorize(Roles = Roles.Admin)]
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAll()
+    {
+        var coupons = await _mediator.Send(new GetAllCouponsQuery());
+        return Ok(coupons);
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpPut("{id}/deactivate")]
+    public async Task<IActionResult> Deactivate(Guid id)
+    {
+        await _mediator.Send(new DeactivateCouponCommand { Id = id });
+        return Ok(new { Message = "Coupon deactivated successfully." });
+    }
 }

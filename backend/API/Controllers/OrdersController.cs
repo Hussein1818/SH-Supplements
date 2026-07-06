@@ -77,4 +77,11 @@ public class OrdersController : ControllerBase
         var result = await _mediator.Send(command);
         return Ok(new { Message = "Return request processed successfully.", Success = result });
     }
+    [HttpGet("all")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> GetAllOrders([FromQuery] GetAllOrdersQuery query)
+    {
+        var orders = await _mediator.Send(query);
+        return Ok(orders);
+    }
 }
