@@ -192,4 +192,20 @@ public class ProductsController : ControllerBase
 
         return Ok(new { Message = $"Successfully imported {importedCount} products with all their dependencies." });
     }
+    [Authorize(Roles = Roles.Admin)]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductCommand command)
+    {
+        command.Id = id;
+        await _mediator.Send(command);
+        return Ok(new { Message = "Product updated successfully." });
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        await _mediator.Send(new DeleteProductCommand { Id = id });
+        return Ok(new { Message = "Product deleted successfully." });
+    }
 }

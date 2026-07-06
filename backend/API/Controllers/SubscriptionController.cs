@@ -1,10 +1,11 @@
 ﻿using Core.Application.Features.System.Commands;
+using Core.Application.Features.Users.Queries;
+using Core.Application.Interfaces.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Core.Application.Interfaces.Repositories;
 
 
 namespace API.Controllers;
@@ -33,4 +34,5 @@ public class SubscriptionController : ControllerBase
 
         return Ok(new { Message = "Subscription created successfully.", SubscriptionId = result });
     }
+   
 }

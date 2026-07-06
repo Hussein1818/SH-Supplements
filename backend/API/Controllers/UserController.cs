@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Core.Domain.Constants;
 
 namespace API.Controllers;
 
@@ -78,5 +79,12 @@ public class UserController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var points = await _mediator.Send(new GetUserLoyaltyPointsQuery { UserId = userId });
         return Ok(new { Points = points });
+    }
+    [HttpGet("all")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> GetAllUsers([FromQuery] GetAllUsersQuery query)
+    {
+        var users = await _mediator.Send(query);
+        return Ok(users);
     }
 }
