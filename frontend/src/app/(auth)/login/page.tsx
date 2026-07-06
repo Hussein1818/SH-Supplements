@@ -42,7 +42,8 @@ export default function Login() {
       );
       const data  = response.data;
       const token = data.token || data.accessToken;
-      loginStore(token);
+      const roles = data.roles;
+      loginStore(token, roles);
       router.push(redirectTo as any);
       toast.success("Welcome back!");
     } catch (error: any) {
