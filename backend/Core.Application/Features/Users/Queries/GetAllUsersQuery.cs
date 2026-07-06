@@ -28,38 +28,51 @@ public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, List<Ad
         _userManager = userManager;
     }
 
-    public Task<List<AdminUserListDto>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
+    public async Task<List<AdminUserListDto>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
     {
-        var query = _profileRepo.GetQueryable();
+        var usersQuery = _userManager.Users.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var search = request.SearchTerm.ToLower();
-            query = query.Where(p => p.FirstName.ToLower().Contains(search) || p.LastName.ToLower().Contains(search));
+            usersQuery = usersQuery.Where(u =>
+                (u.Email != null && u.Email.ToLower().Contains(search)) ||
+                (u.UserName != null && u.UserName.ToLower().Contains(search)));
         }
 
-        var pagedProfiles = query
-            .OrderByDescending(p => p.CreatedAt)
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
+        int pageNumber = request.PageNumber > 0 ? request.PageNumber : 1;
+        int pageSize = request.PageSize > 0 ? request.PageSize : 10;
+
+        var pagedUsers = usersQuery
+            .OrderByDescending(u => u.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
 
-        var userIds = pagedProfiles.Select(p => p.UserId).ToList();
-        var identityUsers = _userManager.Users.Where(u => userIds.Contains(u.Id)).ToList();
-        var identityDict = identityUsers.ToDictionary(u => u.Id, u => u.Email);
+        var userIds = pagedUsers.Select(u => u.Id).ToList();
 
-        var result = pagedProfiles.Select(p => new AdminUserListDto
+        var profiles = await _profileRepo.FindAsync(p => userIds.Contains(p.UserId));
+        var profileDict = profiles.ToDictionary(p => p.UserId, p => p);
+
+        var result = pagedUsers.Select(u =>
         {
-            UserId = p.UserId,
-            FirstName = p.FirstName,
-            LastName = p.LastName,
-            PhoneNumber = p.PhoneNumber,
-            WalletBalance = p.WalletBalance,
-            LoyaltyPoints = p.LoyaltyPoints,
-            ProfileImageUrl = p.ProfileImageUrl,
-            Email = identityDict.ContainsKey(p.UserId) ? identityDict[p.UserId] ?? string.Empty : string.Empty
+            profileDict.TryGetValue(u.Id, out var profile);
+
+            return new AdminUserListDto
+            {
+                UserId = u.Id,
+                Email = u.Email ?? string.Empty,
+                FirstName = profile != null ? profile.FirstName : "N/A",
+                LastName = profile != null ? profile.LastName : "N/A",
+                PhoneNumber = profile != null && !string.IsNullOrEmpty(profile.PhoneNumber)
+                                ? profile.PhoneNumber
+                                : (u.PhoneNumber ?? "N/A"),
+                WalletBalance = profile != null ? profile.WalletBalance : 0,
+                LoyaltyPoints = profile != null ? profile.LoyaltyPoints : 0,
+                ProfileImageUrl = profile?.ProfileImageUrl
+            };
         }).ToList();
 
-        return Task.FromResult(result);
+        return result;
     }
 }
