@@ -103,7 +103,7 @@ export default function ProductsPage() {
         setIsLoading(false);
       }
     }
-    if (isClient && accessToken) fetchInitialData();
+    if (isClient) fetchInitialData();
   }, [isClient, accessToken]);
 
   const handleLoadMore = async () => {
@@ -176,7 +176,7 @@ export default function ProductsPage() {
     return matchesSearch && matchesCategory && matchesBrand;
   });
 
-  if (!accessToken || !isClient) return null;
+  if (!isClient) return null;
 
   // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoading) {
