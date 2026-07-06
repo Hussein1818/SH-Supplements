@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -18,8 +18,9 @@ import {
   Zap,
   Settings,
   BadgeCheck,
-  Leaf,
   LogOut,
+  ShoppingBasket,
+  ShieldCheck
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { cn, normalizeImageUrl } from "@/src/lib/utils";
@@ -30,11 +31,11 @@ import { api } from "@/src/components/auth/axiosInstance";
 const NAV_ITEMS = [
   { name: "Home", href: "/", icon: Home },
   { name: "Categories", href: "/categories", icon: Grid },
-  { name: "Products", href: "/products", icon: ShoppingBag },
+  { name: "Products", href: "/products", icon: ShoppingBasket },
   { name: "Verify", href: "/verify", icon: BadgeCheck },
   { name: "BMI Tool", href: "/bmi", icon: Calculator },
   { name: "Cart", href: "/cart", icon: ShoppingCart },
-  { name: "Orders", href: "/orders", icon: ShoppingCart },
+  { name: "Orders", href: "/orders", icon: ShoppingBag },
   { name: "Flash Deals", href: "/flash-sales", icon: Zap },
   { name: "Settings", href: "/settings", icon: Settings },
 
@@ -42,13 +43,74 @@ const NAV_ITEMS = [
 
 const HIDDEN_ROUTES = ["/login", "/register", "/checkout"] as const;
 
+function NavbarSearch({ isMobile = false, onCloseMenu }: { isMobile?: boolean; onCloseMenu?: () => void }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.value = searchParams.get("search") || "";
+    }
+  }, [searchParams]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = inputRef.current?.value?.trim() || "";
+    if (onCloseMenu) onCloseMenu();
+    if (query) {
+      router.push(`/products?search=${encodeURIComponent(query)}`);
+    } else {
+      router.push("/products");
+    }
+  };
+
+  if (isMobile) {
+    return (
+      <form onSubmit={handleSubmit} className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-stone-400" aria-hidden="true" />
+        <input
+          ref={inputRef}
+          type="search"
+          placeholder="Search supplements..."
+          aria-label="Search supplements"
+          className="w-full h-11 pl-11 pr-4 text-base bg-white/10 text-white placeholder:text-stone-400 rounded-2xl border border-white/10 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+        />
+      </form>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="relative w-full group">
+      <Search
+        className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-stone-400 group-focus-within:text-emerald-600 transition-colors"
+        aria-hidden="true"
+      />
+      <input
+        ref={inputRef}
+        type="search"
+        placeholder="Search supplements..."
+        aria-label="Search supplements"
+        className={cn(
+          "w-full h-11 pl-11 pr-4",
+          "text-base text-stone-800 placeholder:text-stone-400",
+          "bg-stone-100 rounded-2xl border border-transparent",
+          "transition-all duration-200",
+          "focus:outline-none focus:bg-white focus:border-stone-200 focus:ring-2 focus:ring-emerald-500/20",
+          "hover:bg-stone-50"
+        )}
+      />
+    </form>
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const accessToken = useAuthStore((state) => state.accessToken);
+  const isAdmin = useAuthStore((state) => state.isAdmin());
   const cartItems = useCartStore((state) => state.items);
   const [cartCount, setCartCount] = useState(0);
   const [prevCount, setPrevCount] = useState(0);
@@ -71,7 +133,7 @@ export default function Navbar() {
       api
         .get("/User/profile")
         .then((res) => setUserProfile(res.data))
-        .catch(() => {});
+        .catch(() => { });
     } else {
       setUserProfile(null);
     }
@@ -220,26 +282,9 @@ export default function Navbar() {
 
           {/* Desktop Search */}
           <div className="hidden md:flex flex-1 max-w-md mx-6">
-            <div className="relative w-full group">
-              <Search
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-stone-400 group-focus-within:text-emerald-600 transition-colors"
-                aria-hidden="true"
-              />
-              <input
-                ref={searchInputRef}
-                type="search"
-                placeholder="Search supplements..."
-                aria-label="Search supplements"
-                className={cn(
-                  "w-full h-11 pl-11 pr-4",
-                  "text-base text-stone-800 placeholder:text-stone-400",
-                  "bg-stone-100 rounded-2xl border border-transparent",
-                  "transition-all duration-200",
-                  "focus:outline-none focus:bg-white focus:border-stone-200 focus:ring-2 focus:ring-emerald-500/20",
-                  "hover:bg-stone-50"
-                )}
-              />
-            </div>
+            <Suspense fallback={<div className="w-full h-11 bg-stone-100 rounded-2xl animate-pulse" />}>
+              <NavbarSearch />
+            </Suspense>
           </div>
 
           {/* Right Actions */}
@@ -316,6 +361,18 @@ export default function Navbar() {
                     </div>
 
                     <div className="px-1.5 space-y-0.5">
+                      {isAdmin && (
+                        <Link
+                          href="/admin/dashboard"
+                          role="menuitem"
+                          tabIndex={0}
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors focus:bg-emerald-100 focus:outline-none"
+                        >
+                          <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                          Admin Dashboard
+                        </Link>
+                      )}
                       <Link
                         href="/profile"
                         role="menuitem"
@@ -461,19 +518,32 @@ export default function Navbar() {
 
         {/* Mobile Search */}
         <div className="px-6 py-4 border-b border-white/10">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-stone-400" aria-hidden="true" />
-            <input
-              type="search"
-              placeholder="Search supplements..."
-              aria-label="Search supplements"
-              className="w-full h-11 pl-11 pr-4 text-base bg-white/10 text-white placeholder:text-stone-400 rounded-2xl border border-white/10 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
-            />
-          </div>
+          <Suspense fallback={<div className="w-full h-11 bg-white/10 rounded-2xl animate-pulse" />}>
+            <NavbarSearch isMobile onCloseMenu={() => setIsSidebarOpen(false)} />
+          </Suspense>
         </div>
 
         {/* Nav Items */}
         <nav className="flex-1 overflow-y-auto py-4 px-4" aria-label="Sidebar navigation">
+          {isAdmin && (
+            <Link
+              href="/admin/dashboard"
+              className={cn(
+                "flex items-center gap-4 px-4 py-3.5 rounded-2xl mb-2",
+                "text-base font-bold transition-all duration-150",
+                pathname.startsWith("/admin")
+                  ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                  : "bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-900/80 hover:text-white"
+              )}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <ShieldCheck className="h-5 w-5 flex-shrink-0 text-emerald-400" aria-hidden="true" />
+              Admin Dashboard
+              <span className="ml-auto bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                ADMIN
+              </span>
+            </Link>
+          )}
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (

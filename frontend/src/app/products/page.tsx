@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { api } from "@/src/components/auth/axiosInstance";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -23,7 +23,7 @@ import { useCartStore } from "@/src/components/store/cartStore";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/components/store/authStore";
 import { cn, formatPrice, normalizeImageUrl } from "@/src/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // ─── Types (unchanged) ─────────────────────────────────────────────────────
 interface Product {
@@ -57,8 +57,8 @@ function SkeletonProductCard() {
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────
-export default function ProductsPage() {
+// ─── Main Content ──────────────────────────────────────────────────────────
+function ProductsContent() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const addItem = useCartStore((state) => state.addItem);
   const router = useRouter();
@@ -166,11 +166,21 @@ export default function ProductsPage() {
   };
 
   // ── Filter options ────────────────────────────────────────────────────────
-  const categories = ["All", ...Array.from(new Set(products.map((p) => p.categoryName)))];
-  const brands = ["All", ...Array.from(new Set(products.map((p) => p.brandName)))];
+  const categories = ["All", ...Array.from(new Set(products.map((p) => p.categoryName))).filter(Boolean)];
+  const brands = ["All", ...Array.from(new Set(products.map((p) => p.brandName))).filter(Boolean)];
+
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") || searchParams.get("q") || "";
+
+  useEffect(() => {
+    if (urlSearch !== searchQuery) {
+      setSearchQuery(urlSearch);
+    }
+  }, [urlSearch]);
 
   const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch = !q || p.name.toLowerCase().includes(q) || p.categoryName?.toLowerCase().includes(q) || p.brandName?.toLowerCase().includes(q);
     const matchesCategory = selectedCategory === "All" || p.categoryName === selectedCategory;
     const matchesBrand = selectedBrand === "All" || p.brandName === selectedBrand;
     return matchesSearch && matchesCategory && matchesBrand;
@@ -384,16 +394,114 @@ export default function ProductsPage() {
       {/* 3. FULL CATALOG                                                    */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <section aria-label="Full product catalog">
+        {/* Catalog Header & Interactive Filter Bar */}
+        <div className="space-y-6 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black text-stone-900 tracking-tight">
+                {searchQuery ? `Search Results for "${searchQuery}"` : "All Supplements"}
+              </h2>
+              <p className="text-sm text-stone-500 mt-0.5">
+                Showing <strong className="text-stone-800">{filteredProducts.length}</strong> of <strong className="text-stone-800">{products.length}</strong> products
+              </p>
+            </div>
 
+            {/* Filter Controls */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Keyword Search Box */}
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <Input
+                  type="search"
+                  placeholder="Filter catalog..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSearchQuery(val);
+                    if (val.trim()) {
+                      router.push(`/products?search=${encodeURIComponent(val.trim())}`, { scroll: false });
+                    } else {
+                      router.push("/products", { scroll: false });
+                    }
+                  }}
+                  className="pl-10 h-11 rounded-xl bg-white border border-stone-200 text-sm focus:ring-2 focus:ring-emerald-500/20"
+                />
+              </div>
+
+              {/* Category Dropdown */}
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  aria-label="Filter by category"
+                  className="h-11 px-4 pr-10 bg-white border border-stone-200 rounded-xl text-sm font-semibold text-stone-800 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer shadow-sm"
+                >
+                  <option value="All">All Categories</option>
+                  {categories.filter((c) => c !== "All").map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+              </div>
+
+              {/* Brand Dropdown */}
+              <div className="relative">
+                <select
+                  value={selectedBrand}
+                  onChange={(e) => setSelectedBrand(e.target.value)}
+                  aria-label="Filter by brand"
+                  className="h-11 px-4 pr-10 bg-white border border-stone-200 rounded-xl text-sm font-semibold text-stone-800 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer shadow-sm"
+                >
+                  <option value="All">All Brands</option>
+                  {brands.filter((b) => b !== "All").map((brand) => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+              </div>
+
+              {/* Reset Filters */}
+              {(searchQuery || selectedCategory !== "All" || selectedBrand !== "All") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedCategory("All");
+                    setSelectedBrand("All");
+                    router.push("/products", { scroll: false });
+                  }}
+                  className="h-11 px-4 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl font-bold transition-colors"
+                >
+                  Reset
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Product Grid */}
         {filteredProducts.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-stone-200" role="status" aria-live="polite">
-            <div className="h-16 w-16 rounded-2xl bg-stone-50 flex items-center justify-center mx-auto mb-4">
+          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-stone-200 space-y-4" role="status" aria-live="polite">
+            <div className="h-16 w-16 rounded-2xl bg-stone-50 flex items-center justify-center mx-auto mb-2">
               <ShoppingBag className="h-8 w-8 text-stone-300" aria-hidden="true" />
             </div>
-            <h3 className="text-base font-bold text-stone-700 mb-1">No products found</h3>
-            <p className="text-sm text-stone-400">Try adjusting your search or filters.</p>
+            <div>
+              <h3 className="text-base font-bold text-stone-700 mb-1">No matching products found</h3>
+              <p className="text-sm text-stone-400">We couldn't find any items matching your search or filters.</p>
+            </div>
+            <Button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("All");
+                setSelectedBrand("All");
+                router.push("/products", { scroll: false });
+              }}
+              variant="outline"
+              className="rounded-xl font-bold px-6"
+            >
+              Reset All Filters
+            </Button>
           </div>
         ) : (
           <>
@@ -421,5 +529,23 @@ export default function ProductsPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container-xl py-8 space-y-10" dir="ltr">
+          <div className="skeleton h-32 rounded-2xl" />
+          <div className="skeleton h-20 rounded-2xl" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => <SkeletonProductCard key={i} />)}
+          </div>
+        </div>
+      }
+    >
+      <ProductsContent />
+    </Suspense>
   );
 }

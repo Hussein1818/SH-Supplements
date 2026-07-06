@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Eye, EyeOff, Mail, Lock, User, Check, X, Leaf, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Check, X, ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { registerSchema, RegisterFormValues } from "@/src/lib/registerSchema";
 import { api } from "@/src/components/auth/axiosInstance";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -15,48 +18,168 @@ import { cn } from "@/src/lib/utils";
 const BASE_URL = "https://sh-supplements.runasp.net";
 
 export default function Register() {
-  const [formData, setFormData] = useState({
-    firstName: "", LastName: "", userName: "", email: "", password: "",
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: "",
+      userName: "",
+      email: "",
+      password: "",
+    },
+    mode: "onSubmit",
   });
-  const router          = useRouter();
-  const [showPassword,  setShowPassword]  = useState(false);
-  const [isSubmitting,  setIsSubmitting]  = useState(false);
 
-  // ── Password rules (logic unchanged) ─────────────────────────────────────
+  const passwordValue = useWatch({ control: form.control, name: "password", defaultValue: "" }) || "";
+
+  // ── Password rules for visual strength indicator ─────────────────────────
   const passwordRules = {
-    length:       formData.password.length >= 6,
-    hasLowerCase: /[a-z]/.test(formData.password),
-    hasUpperCase: /[A-Z]/.test(formData.password),
-    hasSpecialChar: /[^A-Za-z0-9]/.test(formData.password),
+    length: passwordValue.length >= 6,
+    hasLowerCase: /[a-z]/.test(passwordValue),
+    hasUpperCase: /[A-Z]/.test(passwordValue),
+    hasNumber: /[0-9]/.test(passwordValue),
+    hasSpecialChar: /[^A-Za-z0-9]/.test(passwordValue),
   };
-  const isPasswordValid = Object.values(passwordRules).every(Boolean);
-  const passwordStrength = Object.values(passwordRules).filter(Boolean).length;
+  const validRulesCount = Object.values(passwordRules).filter(Boolean).length;
+  const passwordStrength = validRulesCount === 5 ? 4 : validRulesCount === 4 ? 3 : validRulesCount >= 2 ? 2 : validRulesCount === 1 ? 1 : 0;
 
-  // ── Submit handler (logic unchanged) ─────────────────────────────────────
-  async function handleRegisterSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!isPasswordValid) return;
+  // ── Submit handler ───────────────────────────────────────────────────────
+  async function handleRegisterSubmit(values: RegisterFormValues) {
     setIsSubmitting(true);
     try {
-      const response = await api.post(`${BASE_URL}/api/auth/register`, formData);
+      const parts = values.fullName.trim().split(/\s+/);
+      const firstName = parts[0] || "";
+      const lastName = parts.slice(1).join(" ") || parts[0] || "";
+      const payload = {
+        fullName: values.fullName.trim(),
+        FullName: values.fullName.trim(),
+        firstName,
+        lastName,
+        LastName: lastName,
+        userName: values.userName.trim(),
+        UserName: values.userName.trim(),
+        email: values.email.trim(),
+        Email: values.email.trim(),
+        password: values.password,
+        Password: values.password,
+      };
+
+      const response = await api.post(`${BASE_URL}/api/auth/register`, payload);
       const successMessage =
         response.data?.Message ||
         "Account created! Please check your email to confirm your account.";
       toast.success(successMessage);
-      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
-    } catch (error: any) {
-      const serverResponse = error.response?.data;
-      if (serverResponse?.Message)       toast.error(serverResponse.Message);
-      else if (typeof serverResponse === "string") toast.error(serverResponse);
-      else if (Array.isArray(serverResponse)) serverResponse.forEach((err: string) => toast.error(err));
-      else toast.error("Something went wrong. Please try again.");
+      router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
+    } catch (error) {
+      const err = error as { response?: { data?: Record<string, unknown> | string | Array<unknown> } };
+      const serverResponse = err?.response?.data;
+      let handled = false;
+
+      if (serverResponse && typeof serverResponse === "object") {
+        const objResponse = serverResponse as Record<string, unknown>;
+        const errorsMap = (objResponse.errors || objResponse.Errors) as Record<string, unknown>;
+        if (errorsMap && typeof errorsMap === "object") {
+          Object.entries(errorsMap).forEach(([key, msgs]) => {
+            const rawMsg = Array.isArray(msgs) ? msgs[0] : msgs;
+            if (typeof rawMsg !== "string") return;
+            const lowerKey = key.toLowerCase();
+            const lowerMsg = rawMsg.toLowerCase();
+
+            let friendlyMsg = rawMsg;
+            if (lowerMsg.includes("already taken") || lowerMsg.includes("duplicate") || lowerMsg.includes("already in use") || lowerMsg.includes("exists")) {
+              if (lowerKey.includes("user")) friendlyMsg = "This username is already taken. Please choose another one.";
+              else if (lowerKey.includes("email")) friendlyMsg = "This email address is already registered. Try signing in instead.";
+              else friendlyMsg = "This value is already taken or in use.";
+            } else if (lowerMsg.includes("password")) {
+              friendlyMsg = "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character.";
+            }
+
+            if (lowerKey.includes("user")) {
+              form.setError("userName", { type: "server", message: friendlyMsg });
+              handled = true;
+            } else if (lowerKey.includes("email")) {
+              form.setError("email", { type: "server", message: friendlyMsg });
+              handled = true;
+            } else if (lowerKey.includes("password")) {
+              form.setError("password", { type: "server", message: friendlyMsg });
+              handled = true;
+            } else if (lowerKey.includes("name") || lowerKey.includes("first") || lowerKey.includes("last")) {
+              form.setError("fullName", { type: "server", message: friendlyMsg });
+              handled = true;
+            }
+          });
+        }
+
+        if (Array.isArray(serverResponse)) {
+          serverResponse.forEach((item: unknown) => {
+            const objItem = typeof item === "object" && item !== null ? (item as Record<string, unknown>) : null;
+            const code = typeof item === "string" ? item : String(objItem?.code || "");
+            const desc = typeof item === "string" ? item : String(objItem?.description || objItem?.Message || "");
+            const combined = `${code} ${desc}`.toLowerCase();
+
+            if (combined.includes("username") || combined.includes("user")) {
+              form.setError("userName", {
+                type: "server",
+                message: "This username is already taken. Please choose another one.",
+              });
+              handled = true;
+            } else if (combined.includes("email")) {
+              form.setError("email", {
+                type: "server",
+                message: "This email address is already registered. Try signing in instead.",
+              });
+              handled = true;
+            } else if (combined.includes("password")) {
+              form.setError("password", {
+                type: "server",
+                message: "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+              });
+              handled = true;
+            }
+          });
+        }
+
+        if (!handled && (objResponse.Message || objResponse.message)) {
+          const msg = String(objResponse.Message || objResponse.message);
+          const lowerMsg = msg.toLowerCase();
+          if (lowerMsg.includes("username") && (lowerMsg.includes("taken") || lowerMsg.includes("exist") || lowerMsg.includes("duplicate"))) {
+            form.setError("userName", { type: "server", message: "This username is already taken. Please choose another one." });
+            handled = true;
+          } else if (lowerMsg.includes("email") && (lowerMsg.includes("taken") || lowerMsg.includes("exist") || lowerMsg.includes("duplicate"))) {
+            form.setError("email", { type: "server", message: "This email address is already registered. Try signing in instead." });
+            handled = true;
+          } else {
+            toast.error(msg);
+            handled = true;
+          }
+        }
+      } else if (typeof serverResponse === "string") {
+        const lowerMsg = serverResponse.toLowerCase();
+        if (lowerMsg.includes("username") && (lowerMsg.includes("taken") || lowerMsg.includes("exist") || lowerMsg.includes("duplicate"))) {
+          form.setError("userName", { type: "server", message: "This username is already taken. Please choose another one." });
+          handled = true;
+        } else if (lowerMsg.includes("email") && (lowerMsg.includes("taken") || lowerMsg.includes("exist") || lowerMsg.includes("duplicate"))) {
+          form.setError("email", { type: "server", message: "This email address is already registered. Try signing in instead." });
+          handled = true;
+        } else {
+          toast.error(serverResponse);
+          handled = true;
+        }
+      }
+
+      if (!handled) {
+        toast.error("Registration failed. Please review your information and try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
   }
 
   const strengthColors = ["bg-red-400", "bg-orange-400", "bg-amber-400", "bg-emerald-500"];
-  const strengthLabel  = ["", "Weak", "Fair", "Good", "Strong"];
+  const strengthLabel = ["", "Weak", "Fair", "Good", "Strong"];
 
   return (
     <div className="min-h-screen bg-stone-50 flex font-sans antialiased" dir="ltr">
@@ -138,35 +261,37 @@ export default function Register() {
             </p>
           </div>
 
-          <form onSubmit={handleRegisterSubmit} className="space-y-4" noValidate>
-            {/* Name row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="firstName" className="text-xs font-semibold text-stone-700 uppercase tracking-wide">
-                  First Name
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" aria-hidden="true" />
-                  <Input
-                    id="firstName" type="text" placeholder="John" className="pl-9"
-                    required autoComplete="given-name"
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  />
-                </div>
+          <form onSubmit={form.handleSubmit(handleRegisterSubmit)} className="space-y-4" noValidate>
+            {/* Full Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="fullName" className="text-xs font-semibold text-stone-700 uppercase tracking-wide">
+                Full Name
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" aria-hidden="true" />
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="John Doe"
+                  className="pl-10"
+                  error={!!form.formState.errors.fullName}
+                  required
+                  autoComplete="name"
+                  {...form.register("fullName", {
+                    onChange: () => {
+                      if (form.formState.errors.fullName?.type === "server") {
+                        form.clearErrors("fullName");
+                      }
+                    },
+                  })}
+                />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="lastName" className="text-xs font-semibold text-stone-700 uppercase tracking-wide">
-                  Last Name
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" aria-hidden="true" />
-                  <Input
-                    id="lastName" type="text" placeholder="Doe" className="pl-9"
-                    required autoComplete="family-name"
-                    onChange={(e) => setFormData({ ...formData, LastName: e.target.value })}
-                  />
-                </div>
-              </div>
+              {form.formState.errors.fullName && (
+                <p className="text-red-500 text-xs font-semibold flex items-center gap-1.5 mt-1 animate-fade-up">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {form.formState.errors.fullName.message}
+                </p>
+              )}
             </div>
 
             {/* Username */}
@@ -177,14 +302,31 @@ export default function Register() {
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" aria-hidden="true" />
                 <Input
-                  id="userName" type="text" placeholder="john_doe" className="pl-10"
-                  required autoComplete="username"
-                  onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
+                  id="userName"
+                  type="text"
+                  placeholder="john_doe"
+                  className="pl-10"
+                  error={!!form.formState.errors.userName}
+                  required
+                  autoComplete="username"
+                  {...form.register("userName", {
+                    onChange: () => {
+                      if (form.formState.errors.userName?.type === "server") {
+                        form.clearErrors("userName");
+                      }
+                    },
+                  })}
                 />
               </div>
+              {form.formState.errors.userName && (
+                <p className="text-red-500 text-xs font-semibold flex items-center gap-1.5 mt-1 animate-fade-up">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {form.formState.errors.userName.message}
+                </p>
+              )}
             </div>
 
-            {/* Email */}
+            {/* Email Address */}
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-semibold text-stone-700 uppercase tracking-wide">
                 Email Address
@@ -192,12 +334,28 @@ export default function Register() {
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" aria-hidden="true" />
                 <Input
-                  id="email" type="email" placeholder="name@example.com" className="pl-10"
-                  required autoComplete="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  className="pl-10"
+                  error={!!form.formState.errors.email}
+                  required
+                  autoComplete="email"
+                  {...form.register("email", {
+                    onChange: () => {
+                      if (form.formState.errors.email?.type === "server") {
+                        form.clearErrors("email");
+                      }
+                    },
+                  })}
                 />
               </div>
+              {form.formState.errors.email && (
+                <p className="text-red-500 text-xs font-semibold flex items-center gap-1.5 mt-1 animate-fade-up">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {form.formState.errors.email.message}
+                </p>
+              )}
             </div>
 
             {/* Password */}
@@ -212,22 +370,35 @@ export default function Register() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
                   className="pl-10 pr-10"
-                  required autoComplete="new-password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  error={!!form.formState.errors.password}
+                  required
+                  autoComplete="new-password"
+                  {...form.register("password", {
+                    onChange: () => {
+                      if (form.formState.errors.password?.type === "server") {
+                        form.clearErrors("password");
+                      }
+                    },
+                  })}
                 />
                 <button
                   type="button"
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors cursor-pointer"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                 </button>
               </div>
+              {form.formState.errors.password && (
+                <p className="text-red-500 text-xs font-semibold flex items-center gap-1.5 mt-1 animate-fade-up">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {form.formState.errors.password.message}
+                </p>
+              )}
 
               {/* Password strength */}
-              {formData.password && (
+              {passwordValue && (
                 <div className="space-y-2.5 mt-2">
                   {/* Strength bar */}
                   <div className="flex items-center gap-2">
@@ -248,25 +419,26 @@ export default function Register() {
                   </div>
 
                   {/* Rules */}
-                  <div className="grid grid-cols-2 gap-1" role="list" aria-label="Password requirements">
+                  <div className="grid grid-cols-2 gap-1.5" role="list" aria-label="Password requirements">
                     {[
-                      { rule: passwordRules.length,       label: "6+ characters" },
+                      { rule: passwordRules.length, label: "6+ characters" },
                       { rule: passwordRules.hasLowerCase, label: "Lowercase (a-z)" },
                       { rule: passwordRules.hasUpperCase, label: "Uppercase (A-Z)" },
-                      { rule: passwordRules.hasSpecialChar,label: "Special character" },
+                      { rule: passwordRules.hasNumber, label: "Number (0-9)" },
+                      { rule: passwordRules.hasSpecialChar, label: "Special character" },
                     ].map(({ rule, label }) => (
                       <div
                         key={label}
                         role="listitem"
                         className={cn(
                           "flex items-center gap-1.5 text-[11px] font-medium transition-colors",
-                          rule ? "text-emerald-600" : "text-stone-400"
+                          rule ? "text-emerald-600 font-semibold" : "text-stone-400"
                         )}
                       >
                         {rule ? (
-                          <Check className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                          <Check className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
                         ) : (
-                          <X className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                          <X className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
                         )}
                         {label}
                       </div>
@@ -281,8 +453,7 @@ export default function Register() {
               variant="primary"
               size="lg"
               loading={isSubmitting}
-              disabled={!isPasswordValid}
-              className="w-full rounded-xl font-bold mt-2"
+              className="w-full rounded-xl font-bold mt-3"
               aria-label="Create your account"
             >
               {!isSubmitting && <>Create Account <ArrowRight className="h-4 w-4" aria-hidden="true" /></>}
